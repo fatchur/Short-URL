@@ -1,19 +1,16 @@
 package repositories
 
 import (
+	"short-url/domains/dto"
 	"short-url/domains/entities"
-
-	"gorm.io/gorm"
 )
 
-type ShortUrlRepository struct {
-	db *gorm.DB
+type ShortUrlCommandRepositoryInterface interface {
+	Save(shortUrl *entities.ShortUrl) error
 }
 
-func NewShortUrlRepository(db *gorm.DB) *ShortUrlRepository {
-	return &ShortUrlRepository{db: db}
-}
-
-func (r *ShortUrlRepository) Save(shortUrl *entities.ShortUrl) error {
-	return r.db.Create(shortUrl).Error
+type ShortUrlQueryRepositoryInterface interface {
+	FindByID(id uint) (*entities.ShortUrl, error)
+	FindByShortCode(shortCode string) (*entities.ShortUrl, error)
+	FindByFilter(filter dto.ShortUrlQueryFilter, pagination dto.Pagination) ([]entities.ShortUrl, *dto.PaginationResponse, error)
 }
