@@ -1,4 +1,4 @@
-.PHONY: tidy lint
+.PHONY: tidy lint migrate
 
 tidy:
 	go mod tidy
@@ -14,4 +14,7 @@ lint:
 		go vet ./...; \
 		echo "Tip: install golangci-lint: https://golangci-lint.run"; \
 	fi
+
+migrate:
+	go run cmd/*.go -d migrate
 

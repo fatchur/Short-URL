@@ -1,9 +1,10 @@
-package cmd
+package main
 
 import (
 	"fmt"
 	"log"
 
+	"short-url/domains/config"
 	"short-url/domains/database"
 	"short-url/domains/entities"
 )
@@ -18,6 +19,22 @@ var MigrateModels = []interface{}{
 
 // Migrate runs auto-migration for all registered models
 func Migrate() error {
+	// Load configuration from environment variables
+	cfg := config.LoadConfig()
+	
+	// Convert config to database config and set it
+	dbConfig := database.DBConfig{
+		Host:     cfg.DBHost,
+		Port:     cfg.DBPort,
+		User:     cfg.DBUser,
+		Password: cfg.DBPassword,
+		DBName:   cfg.DBName,
+		SSLMode:  cfg.DBSSLMode,
+		Timezone: cfg.DBTimezone,
+		LogLevel: cfg.DBLogLevel,
+	}
+	database.SetConfig(dbConfig)
+
 	db, err := database.DBConnect()
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
