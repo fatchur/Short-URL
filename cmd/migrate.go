@@ -12,9 +12,9 @@ import (
 // MigrateModels contains all the models that need to be migrated
 var MigrateModels = []interface{}{
 	&entities.User{},
-	// Add other entities here as you create them
-	// &entities.Institution{},
-	// &entities.ShortUrl{},
+	&entities.ShortUrl{},
+	&entities.ShortClickDaily{},
+	&entities.UrlSafety{},
 }
 
 // Migrate runs auto-migration for all registered models

@@ -1,4 +1,4 @@
-.PHONY: tidy lint migrate
+.PHONY: tidy lint migrate seed
 
 tidy:
 	go mod tidy
@@ -16,5 +16,9 @@ lint:
 	fi
 
 migrate:
-	go run cmd/*.go -d migrate
+	cd cmd && go run . -d migrate
+
+seed:
+	cd cmd && go run . -d=seed
+
 

@@ -22,7 +22,7 @@ type Config struct {
 // LoadConfig loads configuration from environment variables
 func LoadConfig() *Config {
 	// Load .env file from domains/config directory
-	envPath := filepath.Join("domains", "config", ".env")
+	envPath := filepath.Join("..", "domains", "config", ".env")
 	if err := godotenv.Load(envPath); err != nil {
 		log.Printf("Warning: Could not load .env file from %s: %v", envPath, err)
 	} else {

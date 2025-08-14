@@ -2,7 +2,10 @@ module short-url/cmd
 
 go 1.22
 
-require short-url v0.0.0
+require (
+	gorm.io/gorm v1.30.1
+	short-url v0.0.0
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -16,7 +19,6 @@ require (
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
-	gorm.io/gorm v1.30.1 // indirect
 )
 
 replace short-url => ../
