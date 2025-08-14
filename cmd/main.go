@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
 	"short-url/domains/config"
 	"short-url/domains/database"
+	"short-url/domains/dto"
 )
 
 func main() {
@@ -13,9 +15,10 @@ func main() {
 	flag.StringVar(&command, "d", "", "Database command to execute")
 	flag.Parse()
 
-	// Load configuration and setup database connection
+	ctx := context.Background()
 	cfg := config.LoadConfig()
-	dbConfig := database.DBConfig{
+	
+	dbConfig := dto.DBConfig{
 		Host:     cfg.DBHost,
 		Port:     cfg.DBPort,
 		User:     cfg.DBUser,
@@ -25,19 +28,17 @@ func main() {
 		Timezone: cfg.DBTimezone,
 		LogLevel: cfg.DBLogLevel,
 	}
-	database.SetConfig(dbConfig)
-
-	db, err := database.DBConnect()
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
 
 	switch command {
 	case "migrate":
-		if err := Migrate(); err != nil {
+		if err := Migrate(ctx, dbConfig); err != nil {
 			log.Fatal("Migration failed:", err)
 		}
 	case "seed":
+		db, err := database.DBConnect(ctx, dbConfig)
+		if err != nil {
+			log.Fatal("Failed to connect to database:", err)
+		}
 		if err := Seed(db); err != nil {
 			log.Fatal("Seeding failed:", err)
 		}

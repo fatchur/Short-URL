@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"short-url/domains/config"
 	"short-url/domains/database"
+	"short-url/domains/dto"
 	"short-url/domains/entities"
 )
 
@@ -17,25 +18,8 @@ var MigrateModels = []interface{}{
 	&entities.UrlSafety{},
 }
 
-// Migrate runs auto-migration for all registered models
-func Migrate() error {
-	// Load configuration from environment variables
-	cfg := config.LoadConfig()
-	
-	// Convert config to database config and set it
-	dbConfig := database.DBConfig{
-		Host:     cfg.DBHost,
-		Port:     cfg.DBPort,
-		User:     cfg.DBUser,
-		Password: cfg.DBPassword,
-		DBName:   cfg.DBName,
-		SSLMode:  cfg.DBSSLMode,
-		Timezone: cfg.DBTimezone,
-		LogLevel: cfg.DBLogLevel,
-	}
-	database.SetConfig(dbConfig)
-
-	db, err := database.DBConnect()
+func Migrate(ctx context.Context, dbConfig dto.DBConfig) error {
+	db, err := database.DBConnect(ctx, dbConfig)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -46,7 +30,6 @@ func Migrate() error {
 	}
 	defer sqlDB.Close()
 
-	// Test database connection
 	if err := sqlDB.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}

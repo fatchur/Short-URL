@@ -1,51 +1,21 @@
 package database
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
-	"sync"
 	"time"
+
+	"short-url/domains/dto"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-type DBConfig struct {
-	DSN      string
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
-	Timezone string
-	LogLevel string
-}
-
-var (
-	currentConfig DBConfig
-	configMutex   sync.RWMutex
-)
-
-// SetConfig safely sets the database configuration
-func SetConfig(cfg DBConfig) {
-	configMutex.Lock()
-	defer configMutex.Unlock()
-	currentConfig = cfg
-}
-
-// GetConfig safely gets the current database configuration
-func GetConfig() DBConfig {
-	configMutex.RLock()
-	defer configMutex.RUnlock()
-	return currentConfig
-}
-
-// DefaultConfig returns a configuration with sensible defaults
-func DefaultConfig() DBConfig {
-	return DBConfig{
+func DefaultConfig() dto.DBConfig {
+	return dto.DBConfig{
 		Host:     "localhost",
 		Port:     "5432",
 		User:     "postgres",
@@ -57,9 +27,7 @@ func DefaultConfig() DBConfig {
 	}
 }
 
-// DBConnect establishes a connection to the PostgreSQL database
-func DBConnect() (*gorm.DB, error) {
-	config := GetConfig()
+func DBConnect(ctx context.Context, config dto.DBConfig) (*gorm.DB, error) {
 
 	dsn := config.DSN
 	if dsn == "" {
@@ -76,7 +44,6 @@ func DBConnect() (*gorm.DB, error) {
 			host, user, password, dbname, port, sslmode, timezone)
 	}
 
-	// Validate required fields
 	if err := validateConfig(config); err != nil {
 		return nil, fmt.Errorf("invalid database config: %w", err)
 	}
@@ -101,8 +68,7 @@ func DBConnect() (*gorm.DB, error) {
 	return db, nil
 }
 
-// validateConfig performs basic validation on the database configuration
-func validateConfig(config DBConfig) error {
+func validateConfig(config dto.DBConfig) error {
 	if config.DSN == "" {
 		// If DSN is not provided, check individual components
 		if config.Host == "" {
@@ -118,7 +84,6 @@ func validateConfig(config DBConfig) error {
 	return nil
 }
 
-// defaultIfEmpty returns the fallback value if the given value is empty
 func defaultIfEmpty(value, fallback string) string {
 	if value != "" {
 		return value
@@ -126,7 +91,6 @@ func defaultIfEmpty(value, fallback string) string {
 	return fallback
 }
 
-// parseLogLevel converts a string log level to gorm's LogLevel type
 func parseLogLevel(level string) logger.LogLevel {
 	switch level {
 	case "silent":
@@ -142,19 +106,16 @@ func parseLogLevel(level string) logger.LogLevel {
 	}
 }
 
-// MustConnect is a convenience function that panics if connection fails
-// Use this only during application startup
-func MustConnect() *gorm.DB {
-	db, err := DBConnect()
+func MustConnect(ctx context.Context, config dto.DBConfig) *gorm.DB {
+	db, err := DBConnect(ctx, config)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to connect to database: %v", err))
 	}
 	return db
 }
 
-// TestConnection attempts to ping the database to verify connectivity
-func TestConnection() error {
-	db, err := DBConnect()
+func TestConnection(ctx context.Context, config dto.DBConfig) error {
+	db, err := DBConnect(ctx, config)
 	if err != nil {
 		return err
 	}
