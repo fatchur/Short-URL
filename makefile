@@ -1,4 +1,4 @@
-.PHONY: tidy lint migrate seed
+.PHONY: tidy lint migrate seed up drop-table
 
 tidy:
 	go mod tidy
@@ -20,5 +20,11 @@ migrate:
 
 seed:
 	cd cmd && go run . -d=seed
+
+up:
+	docker-compose up -d
+
+drop-table:
+	cd cmd && go run . -d=drop-table
 
 

@@ -17,7 +17,7 @@ func main() {
 
 	ctx := context.Background()
 	cfg := config.LoadConfig()
-	
+
 	dbConfig := dto.DBConfig{
 		Host:     cfg.DBHost,
 		Port:     cfg.DBPort,
@@ -42,7 +42,11 @@ func main() {
 		if err := Seed(db); err != nil {
 			log.Fatal("Seeding failed:", err)
 		}
+	case "drop-table":
+		if err := DropTables(ctx, dbConfig); err != nil {
+			log.Fatal("Drop tables failed:", err)
+		}
 	default:
-		log.Fatal("Unknown command. Use: -d migrate or -d seed")
+		log.Fatal("Unknown command. Use: -d migrate, -d seed, or -d drop-tables")
 	}
 }
