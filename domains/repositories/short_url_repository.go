@@ -14,5 +14,6 @@ type ShortUrlCommandRepositoryInterface interface {
 type ShortUrlQueryRepositoryInterface interface {
 	FindByID(ctx context.Context, id uint) (*entities.ShortUrl, error)
 	FindByShortCode(ctx context.Context, shortCode string) (*entities.ShortUrl, error)
+	FindByShortCodeAndUserID(ctx context.Context, shortCode string, userID uint) (*entities.ShortUrl, error)
 	FindByFilter(ctx context.Context, filter dto.ShortUrlQueryFilter, pagination dto.Pagination) ([]entities.ShortUrl, *dto.PaginationResponse, error)
 }

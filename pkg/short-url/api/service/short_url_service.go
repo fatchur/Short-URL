@@ -53,8 +53,8 @@ func (s *shortUrlService) CreateShortUrl(ctx context.Context, longUrl string, us
 	return shortUrl, nil
 }
 
-func (s *shortUrlService) GetByShortCode(ctx context.Context, shortCode string) (*entities.ShortUrl, error) {
-	return s.queryRepo.FindByShortCode(ctx, shortCode)
+func (s *shortUrlService) GetByShortCode(ctx context.Context, shortCode string, userID uint) (*entities.ShortUrl, error) {
+	return s.queryRepo.FindByShortCodeAndUserID(ctx, shortCode, userID)
 }
 
 func (s *shortUrlService) GetByFilter(ctx context.Context, filter dto.ShortUrlQueryFilter, pagination dto.Pagination) ([]entities.ShortUrl, *dto.PaginationResponse, error) {

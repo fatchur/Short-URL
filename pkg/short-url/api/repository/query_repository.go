@@ -38,6 +38,15 @@ func (r *shortUrlQueryRepository) FindByShortCode(ctx context.Context, shortCode
 	return &shortUrl, nil
 }
 
+func (r *shortUrlQueryRepository) FindByShortCodeAndUserID(ctx context.Context, shortCode string, userID uint) (*entities.ShortUrl, error) {
+	var shortUrl entities.ShortUrl
+	err := r.db.WithContext(ctx).Where("short_code = ? AND user_id = ? AND is_active = ?", shortCode, userID, true).First(&shortUrl).Error
+	if err != nil {
+		return nil, err
+	}
+	return &shortUrl, nil
+}
+
 func (r *shortUrlQueryRepository) FindByFilter(ctx context.Context, filter dto.ShortUrlQueryFilter, pagination dto.Pagination) ([]entities.ShortUrl, *dto.PaginationResponse, error) {
 	var shortUrls []entities.ShortUrl
 	var total int64

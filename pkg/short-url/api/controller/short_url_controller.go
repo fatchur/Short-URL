@@ -51,6 +51,35 @@ func (c *ShortUrlController) CreateShortUrl(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(response)
 }
 
+func (c *ShortUrlController) GetLongUrl(ctx *fiber.Ctx) error {
+	shortCode := ctx.Params("shortCode")
+	if shortCode == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Short code is required",
+		})
+	}
+
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == 0 {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "User authentication required",
+		})
+	}
+
+	shortUrl, err := c.service.GetByShortCode(ctx.Context(), shortCode, userID)
+	if err != nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Short URL not found or access denied",
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"short_code": shortUrl.ShortCode,
+		"long_url":   shortUrl.LongUrl,
+		"user_id":    shortUrl.UserID,
+	})
+}
+
 func (c *ShortUrlController) RegisterRoutes(api fiber.Router) {
 	api.Post("/url", c.CreateShortUrl)
 }
