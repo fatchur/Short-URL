@@ -15,8 +15,7 @@ func NewRouter(shortUrlController *controller.ShortUrlController, sessionQueryRe
 		return c.Status(fiber.StatusOK).SendString("Short URL Service")
 	})
 
-	protectedRoot := app.Group("/", middleware.JWTAuth(sessionQueryRepo))
-	protectedRoot.Get("/url/:shortCode", shortUrlController.GetLongUrl)
+	app.Get("/url/:shortCode", middleware.JWTAuth(sessionQueryRepo), shortUrlController.GetLongUrl)
 
 	v1 := app.Group("/api/v1")
 	protected := v1.Group("/", middleware.JWTAuth(sessionQueryRepo))
