@@ -1,4 +1,4 @@
-.PHONY: tidy lint migrate seed up drop-table mocks
+.PHONY: tidy lint migrate seed up drop-table clear-table mocks
 
 tidy:
 	go mod tidy
@@ -27,6 +27,9 @@ up:
 
 drop-table:
 	cd cmd && go run . -d=drop-table
+
+clear-table:
+	cd cmd && go run . -d=clear-table
 
 mocks:
 	$(shell go env GOPATH)/bin/mockery
