@@ -34,7 +34,7 @@ func NewShortUrlService(
 
 func (s *shortUrlService) CreateShortUrl(ctx context.Context, longUrl string, userID uint) (*entities.ShortUrl, error) {
 	shortCode := s.generateShortCode()
-	
+
 	shortUrl := &entities.ShortUrl{
 		UserID:    userID,
 		LongUrl:   longUrl,
@@ -43,7 +43,7 @@ func (s *shortUrlService) CreateShortUrl(ctx context.Context, longUrl string, us
 		CreatedAt: time.Now(),
 		CreatedBy: userID,
 		UpdatedAt: time.Now(),
-		UpdatedBy: &userID,
+		UpdatedBy: userID,
 	}
 
 	if err := s.commandRepo.Save(ctx, shortUrl); err != nil {

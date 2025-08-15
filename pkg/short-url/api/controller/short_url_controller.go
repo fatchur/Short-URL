@@ -43,7 +43,6 @@ func (c *ShortUrlController) CreateShortUrl(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(response)
 }
 
-func (c *ShortUrlController) RegisterRoutes(app *fiber.App) {
-	api := app.Group("/api/v1")
+func (c *ShortUrlController) RegisterRoutes(api fiber.Router) {
 	api.Post("/url", c.CreateShortUrl)
 }
