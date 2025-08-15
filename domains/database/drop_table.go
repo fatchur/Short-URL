@@ -1,11 +1,10 @@
-package main
+package database
 
 import (
 	"context"
 	"fmt"
 	"log"
 
-	"short-url/domains/database"
 	"short-url/domains/dto"
 	"short-url/domains/entities"
 )
@@ -18,7 +17,7 @@ var DropModels = []interface{}{
 }
 
 func DropTables(ctx context.Context, dbConfig dto.DBConfig) error {
-	db, err := database.DBConnect(ctx, dbConfig)
+	db, err := DBConnect(ctx, dbConfig)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}

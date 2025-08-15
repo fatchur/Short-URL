@@ -1,10 +1,10 @@
-package main
+package database
 
 import (
 	"fmt"
 	"log"
 
-	"short-url/cmd/seed"
+	"short-url/domains/database/seed"
 	"short-url/domains/entities"
 
 	"gorm.io/gorm"

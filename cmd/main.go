@@ -31,7 +31,7 @@ func main() {
 
 	switch command {
 	case "migrate":
-		if err := Migrate(ctx, dbConfig); err != nil {
+		if err := database.Migrate(ctx, dbConfig); err != nil {
 			log.Fatal("Migration failed:", err)
 		}
 	case "seed":
@@ -39,14 +39,18 @@ func main() {
 		if err != nil {
 			log.Fatal("Failed to connect to database:", err)
 		}
-		if err := Seed(db); err != nil {
+		if err := database.Seed(db); err != nil {
 			log.Fatal("Seeding failed:", err)
 		}
 	case "drop-table":
-		if err := DropTables(ctx, dbConfig); err != nil {
+		if err := database.DropTables(ctx, dbConfig); err != nil {
 			log.Fatal("Drop tables failed:", err)
 		}
+	case "clear-table":
+		if err := database.ClearTables(ctx, dbConfig); err != nil {
+			log.Fatal("Clear tables failed:", err)
+		}
 	default:
-		log.Fatal("Unknown command. Use: -d migrate, -d seed, or -d drop-tables")
+		log.Fatal("Unknown command. Use: -d migrate, -d seed, -d drop-table, or -d clear-table")
 	}
 }
