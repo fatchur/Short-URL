@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/joho/godotenv"
 )
@@ -19,16 +20,16 @@ type Config struct {
 	DBLogLevel string
 }
 
-// LoadConfig loads configuration from environment variables
 func LoadConfig() *Config {
-	// Load .env file from domains/config directory
-	envPath := filepath.Join("..", "domains", "config", ".env")
+	// Get the directory of this source file to find the .env file in the same directory
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	envPath := filepath.Join(dir, ".env")
+
+	// Load .env file from the config directory
 	if err := godotenv.Load(envPath); err != nil {
 		log.Printf("Warning: Could not load .env file from %s: %v", envPath, err)
-	} else {
-		log.Printf("Loaded environment variables from %s", envPath)
 	}
-
 	config := &Config{
 		DBHost:     getRequiredEnv("DB_HOST"),
 		DBPort:     getEnvWithDefault("DB_PORT", "5432"),
