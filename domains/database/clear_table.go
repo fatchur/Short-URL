@@ -13,6 +13,7 @@ var ClearModels = []interface{}{
 	&entities.UrlSafety{},
 	&entities.ShortClickDaily{},
 	&entities.ShortUrl{},
+	&entities.UserSession{},
 	&entities.User{},
 }
 

@@ -27,6 +27,10 @@ func Seed(db *gorm.DB) error {
 		return fmt.Errorf("failed to seed users: %w", err)
 	}
 
+	if err := seedUserSessions(db); err != nil {
+		return fmt.Errorf("failed to seed user sessions: %w", err)
+	}
+
 	log.Println("Database seeding completed successfully!")
 	return nil
 }
@@ -52,5 +56,29 @@ func seedUsers(db *gorm.DB) error {
 	}
 
 	log.Println("User seeding completed successfully!")
+	return nil
+}
+
+func seedUserSessions(db *gorm.DB) error {
+	log.Println("Starting user session seeding...")
+
+	sessions := seed.UserSessions
+
+	for _, session := range sessions {
+		var existingSession entities.UserSession
+		result := db.Where("session_token = ?", session.SessionToken).First(&existingSession)
+		if result.Error == nil {
+			log.Printf("Session with token %s already exists, skipping", session.SessionToken)
+			continue
+		}
+
+		if err := db.Create(&session).Error; err != nil {
+			log.Printf("Failed to seed session %s: %v", session.SessionToken, err)
+			return err
+		}
+		log.Printf("Successfully seeded session for user ID: %d", session.UserID)
+	}
+
+	log.Println("User session seeding completed successfully!")
 	return nil
 }

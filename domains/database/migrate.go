@@ -11,6 +11,7 @@ import (
 
 var MigrateModels = []interface{}{
 	&entities.User{},
+	&entities.UserSession{},
 	&entities.ShortUrl{},
 	&entities.ShortClickDaily{},
 	&entities.UrlSafety{},
