@@ -13,5 +13,4 @@ type UrlSafety struct {
 	CheckedAt  time.Time      `json:"checked_at"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 
-	// Relationships can be loaded separately to avoid circular references
 }

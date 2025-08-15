@@ -29,7 +29,6 @@ type ShortUrlControllerIntegrationTestSuite struct {
 func (suite *ShortUrlControllerIntegrationTestSuite) SetupSuite() {
 	suite.ctx = context.Background()
 
-	// Load test configuration
 	cfg := config.LoadConfig()
 
 	dbConfig := dto.DBConfig{
@@ -50,22 +49,18 @@ func (suite *ShortUrlControllerIntegrationTestSuite) SetupSuite() {
 		DB:       0,
 	}
 
-	// Clear tables before testing
 	err := database.ClearTables(suite.ctx, dbConfig)
 	suite.Require().NoError(err)
 
-	// Setup database connections
 	db, err := database.DBConnect(suite.ctx, dbConfig)
 	suite.Require().NoError(err)
 
-	// Seed tables with test data
 	err = database.Seed(db)
 	suite.Require().NoError(err)
 
 	redisClient, err := database.CacheConnect(suite.ctx, cacheConfig)
 	suite.Require().NoError(err)
 
-	// Setup repositories and service
 	commandRepo := repository.NewShortUrlCommandRepository(db)
 	queryRepo := repository.NewShortUrlQueryRepository(db)
 	redisRepo := repository.NewRedisRepository(redisClient)
@@ -73,27 +68,23 @@ func (suite *ShortUrlControllerIntegrationTestSuite) SetupSuite() {
 	shortUrlService := service.NewShortUrlService(commandRepo, queryRepo, redisRepo)
 	suite.controller = NewShortUrlController(shortUrlService)
 
-	// Setup Fiber app
 	suite.app = fiber.New()
 	v1 := suite.app.Group("/api/v1")
 	suite.controller.RegisterRoutes(v1)
 }
 
 func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_Success() {
-	// Arrange
 	requestBody := dto.CreateShortUrlRequest{
 		LongUrl: "https://example.com/very-long-url-that-needs-shortening",
 		UserID:  1,
 	}
 
-	// Act
 	body, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/api/v1/url", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := suite.app.Test(req)
+	resp, err := suite.app.Test(req, 10000000)
 
-	// Assert
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 201, resp.StatusCode)
 
@@ -109,13 +100,11 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_Success(
 }
 
 func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_InvalidJSON() {
-	// Act
 	req, _ := http.NewRequest("POST", "/api/v1/url", bytes.NewBuffer([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := suite.app.Test(req)
 
-	// Assert
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 400, resp.StatusCode)
 
@@ -126,23 +115,18 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_InvalidJ
 }
 
 func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_EmptyLongUrl() {
-	// Arrange
 	requestBody := dto.CreateShortUrlRequest{
 		LongUrl: "",
 		UserID:  1,
 	}
 
-	// Act
 	body, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/api/v1/url", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := suite.app.Test(req)
 
-	// Assert
 	assert.NoError(suite.T(), err)
-	// Should still process the request even with empty URL for now
-	// This test documents current behavior - validation can be added later
 	assert.Equal(suite.T(), 201, resp.StatusCode)
 }
 

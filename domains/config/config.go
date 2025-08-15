@@ -21,12 +21,10 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
-	// Get the directory of this source file to find the .env file in the same directory
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filename)
 	envPath := filepath.Join(dir, ".env")
 
-	// Load .env file from the config directory
 	if err := godotenv.Load(envPath); err != nil {
 		log.Printf("Warning: Could not load .env file from %s: %v", envPath, err)
 	}
@@ -45,7 +43,6 @@ func LoadConfig() *Config {
 	return config
 }
 
-// getRequiredEnv gets a required environment variable, panics if empty
 func getRequiredEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
@@ -54,7 +51,6 @@ func getRequiredEnv(key string) string {
 	return value
 }
 
-// getEnvWithDefault gets an environment variable with a fallback default value
 func getEnvWithDefault(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

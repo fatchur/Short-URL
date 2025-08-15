@@ -17,5 +17,4 @@ type ShortClickDaily struct {
 	UpdatedBy  uint           `json:"updated_by"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 
-	// Relationships can be loaded separately to avoid circular references
 }

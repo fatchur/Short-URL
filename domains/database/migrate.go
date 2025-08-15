@@ -9,7 +9,6 @@ import (
 	"short-url/domains/entities"
 )
 
-// MigrateModels contains all the models that need to be migrated
 var MigrateModels = []interface{}{
 	&entities.User{},
 	&entities.ShortUrl{},
@@ -35,7 +34,6 @@ func Migrate(ctx context.Context, dbConfig dto.DBConfig) error {
 
 	log.Println("Starting database migration...")
 
-	// Run migrations for all models
 	for _, model := range MigrateModels {
 		modelName := fmt.Sprintf("%T", model)
 		log.Printf("Migrating: %s", modelName)

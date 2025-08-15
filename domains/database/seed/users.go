@@ -16,6 +16,7 @@ func UintPtr(u uint) *uint {
 
 var Users = []entities.User{
 	{
+		ID:            1,
 		InstitutionID: 1,
 		Name:          "John Doe",
 		Email:         "john@example.com",
@@ -27,6 +28,7 @@ var Users = []entities.User{
 		UpdatedBy:     UintPtr(1),
 	},
 	{
+		ID:            2,
 		InstitutionID: 1,
 		Name:          "Jane Smith",
 		Email:         "jane@example.com",
@@ -38,6 +40,7 @@ var Users = []entities.User{
 		UpdatedBy:     UintPtr(1),
 	},
 	{
+		ID:            3,
 		InstitutionID: 2,
 		Name:          "Bob Johnson",
 		Email:         "bob@example.com",

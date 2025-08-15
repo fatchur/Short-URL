@@ -31,7 +31,6 @@ func DBConnect(ctx context.Context, config dto.DBConfig) (*gorm.DB, error) {
 
 	dsn := config.DSN
 	if dsn == "" {
-		// Build DSN from individual components
 		host := defaultIfEmpty(config.Host, "localhost")
 		port := defaultIfEmpty(config.Port, "5432")
 		user := defaultIfEmpty(config.User, "postgres")
@@ -70,7 +69,6 @@ func DBConnect(ctx context.Context, config dto.DBConfig) (*gorm.DB, error) {
 
 func validateConfig(config dto.DBConfig) error {
 	if config.DSN == "" {
-		// If DSN is not provided, check individual components
 		if config.Host == "" {
 			return fmt.Errorf("host cannot be empty")
 		}

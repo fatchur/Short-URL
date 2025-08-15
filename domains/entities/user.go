@@ -16,9 +16,6 @@ type User struct {
 	UpdatedAt     time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 	UpdatedBy     *uint     `json:"updated_by" gorm:"index"`
 
-	// Relationships
-	// Institution *Institution `json:"institution,omitempty" gorm:"foreignKey:InstitutionID"`
-	// ShortUrls   []ShortUrl   `json:"short_urls,omitempty" gorm:"foreignKey:CreatedBy"`
 }
 
 func (User) TableName() string {

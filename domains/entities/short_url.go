@@ -19,7 +19,6 @@ type ShortUrl struct {
 	UpdatedBy uint           `json:"updated_by"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 
-	// Relationships
 	User             User              `json:"user" gorm:"foreignKey:UserID"`
 	ShortClickDailys []ShortClickDaily `json:"short_click_dailys" gorm:"foreignKey:ShortUrlID"`
 }
