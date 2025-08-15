@@ -1,8 +1,9 @@
-.PHONY: tidy lint migrate seed up drop-table
+.PHONY: tidy lint migrate seed up drop-table mocks
 
 tidy:
 	go mod tidy
 	cd cmd && go mod tidy
+	cd pkg/short-url && go mod tidy
 
 lint:
 	@if command -v golangci-lint >/dev/null 2>&1; then \
@@ -26,5 +27,8 @@ up:
 
 drop-table:
 	cd cmd && go run . -d=drop-table
+
+mocks:
+	$(shell go env GOPATH)/bin/mockery
 
 

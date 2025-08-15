@@ -1,0 +1,14 @@
+with-expecter: true
+dir: "{{.InterfaceDir}}/mocks"
+mockname: "Mock{{.InterfaceName}}"
+filename: "{{.MockName}}.go"
+outpkg: mocks
+packages:
+  short-url/domains/repositories:
+    interfaces:
+      ShortUrlCommandRepositoryInterface:
+      ShortUrlQueryRepositoryInterface:
+      RedisRepositoryInterface:
+  short-url/domains/service:
+    interfaces:
+      ShortUrlServiceInterface:
