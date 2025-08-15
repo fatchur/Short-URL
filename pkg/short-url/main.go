@@ -8,6 +8,7 @@ import (
 	"short-url-service/api/repository"
 	"short-url-service/api/service"
 	"short-url-service/router"
+	userrepo "user-service/api/repository"
 
 	"short-url/domains/config"
 	"short-url/domains/database"
@@ -56,7 +57,8 @@ func main() {
 
 	shortUrlController := controller.NewShortUrlController(shortUrlService)
 
-	app := router.NewRouter(shortUrlController, cfg.JWTSecret)
+	sessionQueryRepo := userrepo.NewUserSessionQueryRepository(db)
+	app := router.NewRouter(shortUrlController, sessionQueryRepo)
 
 	log.Println("Starting server on :8080...")
 	if err := app.Listen(":8080"); err != nil {

@@ -11,10 +11,12 @@ import (
 	"short-url-service/api/repository"
 	"short-url-service/api/service"
 	"short-url-service/middleware"
+	userrepo "user-service/api/repository"
 
 	"short-url/domains/config"
 	"short-url/domains/database"
 	"short-url/domains/dto"
+	"short-url/domains/repositories"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -24,9 +26,10 @@ import (
 
 type ShortUrlControllerIntegrationTestSuite struct {
 	suite.Suite
-	app        *fiber.App
-	controller *ShortUrlController
-	ctx        context.Context
+	app              *fiber.App
+	controller       *ShortUrlController
+	ctx              context.Context
+	sessionQueryRepo repositories.UserSessionQueryRepositoryInterface
 }
 
 func (suite *ShortUrlControllerIntegrationTestSuite) SetupSuite() {
@@ -74,7 +77,8 @@ func (suite *ShortUrlControllerIntegrationTestSuite) SetupSuite() {
 	suite.app = fiber.New()
 	v1 := suite.app.Group("/api/v1")
 
-	protected := v1.Group("/", middleware.JWTAuth(cfg.JWTSecret))
+	suite.sessionQueryRepo = userrepo.NewUserSessionQueryRepository(db)
+	protected := v1.Group("/", middleware.JWTAuth(suite.sessionQueryRepo))
 	suite.controller.RegisterRoutes(protected)
 }
 
@@ -83,7 +87,7 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_Success(
 		LongUrl: "https://example.com/very-long-url-that-needs-shortening",
 	}
 
-	token := suite.generateTestJWT(1, "john@example.com")
+	token := suite.generateTestJWT(1, "john@example.com", "abcd1234567890abcd1234567890abcd1234567890abcd1234567890abcd1234")
 
 	body, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/api/v1/url", bytes.NewBuffer(body))
@@ -107,7 +111,7 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_Success(
 }
 
 func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_InvalidJSON() {
-	token := suite.generateTestJWT(1, "john@example.com")
+	token := suite.generateTestJWT(1, "john@example.com", "abcd1234567890abcd1234567890abcd1234567890abcd1234567890abcd1234")
 	
 	req, _ := http.NewRequest("POST", "/api/v1/url", bytes.NewBuffer([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -129,7 +133,7 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_EmptyLon
 		LongUrl: "",
 	}
 
-	token := suite.generateTestJWT(1, "john@example.com")
+	token := suite.generateTestJWT(1, "john@example.com", "abcd1234567890abcd1234567890abcd1234567890abcd1234567890abcd1234")
 
 	body, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/api/v1/url", bytes.NewBuffer(body))
@@ -142,21 +146,29 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_EmptyLon
 	assert.Equal(suite.T(), 201, resp.StatusCode)
 }
 
-func (suite *ShortUrlControllerIntegrationTestSuite) generateTestJWT(userID uint, email string) string {
-	cfg := config.LoadConfig()
-
+func (suite *ShortUrlControllerIntegrationTestSuite) generateTestJWT(userID uint, email, sessionToken string) string {
 	claims := &middleware.Claims{
-		UserID: userID,
-		Email:  email,
+		UserID:       userID,
+		Email:        email,
+		SessionToken: sessionToken,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
+	secretKey := suite.getSessionSecret(sessionToken)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString([]byte(cfg.JWTSecret))
+	tokenString, _ := token.SignedString([]byte(secretKey))
 	return tokenString
+}
+
+func (suite *ShortUrlControllerIntegrationTestSuite) getSessionSecret(sessionToken string) string {
+	session, err := suite.sessionQueryRepo.FindBySessionToken(context.Background(), sessionToken)
+	if err != nil {
+		suite.T().Fatalf("Failed to find session for token %s: %v", sessionToken, err)
+	}
+	return session.SecretKey
 }
 
 func TestShortUrlControllerIntegrationTestSuite(t *testing.T) {

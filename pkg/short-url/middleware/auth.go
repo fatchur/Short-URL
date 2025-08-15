@@ -3,13 +3,16 @@ package middleware
 import (
 	"strings"
 
+	"short-url/domains/repositories"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type Claims struct {
-	UserID uint   `json:"user_id"`
-	Email  string `json:"email"`
+	UserID       uint   `json:"user_id"`
+	Email        string `json:"email"`
+	SessionToken string `json:"session_token"`
 	jwt.RegisteredClaims
 }
 
@@ -18,7 +21,7 @@ const (
 	ContextUserEmail = "user_email"
 )
 
-func JWTAuth(secretKey string) fiber.Handler {
+func JWTAuth(sessionQueryRepo repositories.UserSessionQueryRepositoryInterface) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
@@ -35,7 +38,17 @@ func JWTAuth(secretKey string) fiber.Handler {
 		}
 
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
+			claims, ok := token.Claims.(*Claims)
+			if !ok {
+				return nil, jwt.ErrInvalidKey
+			}
+
+			session, err := sessionQueryRepo.FindBySessionToken(c.Context(), claims.SessionToken)
+			if err != nil {
+				return nil, jwt.ErrInvalidKey
+			}
+
+			return []byte(session.SecretKey), nil
 		})
 
 		if err != nil || !token.Valid {
