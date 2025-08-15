@@ -4,6 +4,7 @@ tidy:
 	go mod tidy
 	cd cmd && go mod tidy
 	cd pkg/short-url && go mod tidy
+	cd pkg/user && go mod tidy
 
 lint:
 	@if command -v golangci-lint >/dev/null 2>&1; then \

@@ -75,11 +75,11 @@ func (suite *ShortUrlControllerIntegrationTestSuite) SetupSuite() {
 	suite.controller = NewShortUrlController(shortUrlService)
 
 	suite.app = fiber.New()
-	
+
 	suite.sessionQueryRepo = userrepo.NewUserSessionQueryRepository(db)
-	
+
 	suite.app.Get("/url/:shortCode", middleware.JWTAuth(suite.sessionQueryRepo), suite.controller.GetLongUrl)
-	
+
 	v1 := suite.app.Group("/api/v1")
 	protected := v1.Group("/", middleware.JWTAuth(suite.sessionQueryRepo))
 	suite.controller.RegisterRoutes(protected)
@@ -200,26 +200,20 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateAndGetShortUrl_In
 	err = json.Unmarshal(createDataBytes, &createResponseData)
 	suite.Require().NoError(err)
 	shortCode := createResponseData.ShortCode
-	
+
 	suite.T().Logf("Generated short code: %s", shortCode)
-	suite.T().Logf("Testing GET request to: /url/%s", shortCode)
 
-	getReq, _ := http.NewRequest("GET", "/url/"+shortCode, nil)
-	getReq.Header.Set("Authorization", "Bearer "+token)
+	// get via json
+	getJSONReq, _ := http.NewRequest("GET", "/url/"+shortCode, nil)
+	getJSONReq.Header.Set("Authorization", "Bearer "+token)
+	getJSONReq.Header.Set("Accept", "application/json")
 
-	getResp, err := suite.app.Test(getReq, 100000000)
+	getJSONResp, err := suite.app.Test(getJSONReq, 100000000)
 	suite.Require().NoError(err)
-	
-	if getResp.StatusCode != 200 {
-		respBody := make([]byte, getResp.ContentLength)
-		getResp.Body.Read(respBody)
-		suite.T().Logf("Unexpected status code: %d, Response body: %s", getResp.StatusCode, string(respBody))
-	}
-	
-	suite.Require().Equal(200, getResp.StatusCode)
+	suite.Require().Equal(200, getJSONResp.StatusCode)
 
 	var getBaseResponse dto.BaseResponse
-	err = json.NewDecoder(getResp.Body).Decode(&getBaseResponse)
+	err = json.NewDecoder(getJSONResp.Body).Decode(&getBaseResponse)
 	suite.Require().NoError(err)
 
 	assert.True(suite.T(), getBaseResponse.Success)
@@ -234,6 +228,17 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateAndGetShortUrl_In
 	assert.Equal(suite.T(), shortCode, getDataMap["short_code"])
 	assert.Equal(suite.T(), "https://integration-test.example.com/very-long-url-for-testing", getDataMap["long_url"])
 	assert.Equal(suite.T(), float64(1), getDataMap["user_id"])
+
+	// get via redirect
+	getRedirectReq, _ := http.NewRequest("GET", "/url/"+shortCode, nil)
+	getRedirectReq.Header.Set("Authorization", "Bearer "+token)
+
+	getRedirectResp, err := suite.app.Test(getRedirectReq, 100000000)
+	suite.Require().NoError(err)
+	suite.Require().Equal(302, getRedirectResp.StatusCode)
+
+	location := getRedirectResp.Header.Get("Location")
+	assert.Equal(suite.T(), "https://integration-test.example.com/very-long-url-for-testing", location)
 }
 
 func (suite *ShortUrlControllerIntegrationTestSuite) generateTestJWT(userID uint, email, sessionToken string) string {
