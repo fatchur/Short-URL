@@ -3,7 +3,6 @@ package controller
 import (
 	"short-url/domains/dto"
 	"short-url/domains/service"
-	"user-service/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -26,26 +25,15 @@ func (c *UserController) CreateSession(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
-	userID := middleware.GetUserIDFromContext(ctx)
-	if userID == 0 {
-		response := dto.NewErrorResponse(fiber.StatusUnauthorized, "User authentication required")
-		return ctx.Status(fiber.StatusUnauthorized).JSON(response)
+	if req.Email == "" || req.Password == "" {
+		response := dto.NewErrorResponse(fiber.StatusBadRequest, "Email and password are required")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
-	deviceInfo := ""
-	if req.DeviceInfo != "" {
-		deviceInfo = req.DeviceInfo
-	}
-
-	ipAddress := ""
-	if req.IPAddress != "" {
-		ipAddress = req.IPAddress
-	}
-
-	session, err := c.userSessionService.CreateSession(ctx.Context(), userID, deviceInfo, ipAddress)
+	session, err := c.userSessionService.CreateSession(ctx.Context(), req.Email, req.Password, req.DeviceInfo, req.IPAddress)
 	if err != nil {
-		response := dto.NewErrorResponse(fiber.StatusInternalServerError, "Failed to create session")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(response)
+		response := dto.NewErrorResponse(fiber.StatusUnauthorized, "Invalid credentials")
+		return ctx.Status(fiber.StatusUnauthorized).JSON(response)
 	}
 
 	responseData := dto.CreateSessionResponse{

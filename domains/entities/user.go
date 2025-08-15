@@ -9,6 +9,7 @@ type User struct {
 	InstitutionID uint      `json:"institution_id" gorm:"not null;index"`
 	Name          string    `json:"name" gorm:"type:varchar(255);not null"`
 	Email         string    `json:"email" gorm:"type:varchar(255);not null;uniqueIndex"`
+	PasswordHash  string    `json:"-" gorm:"type:varchar(255);not null;column:password_hash"`
 	PhoneNumber   *string   `json:"phone_number" gorm:"type:varchar(20)"`
 	IsActive      bool      `json:"is_active" gorm:"default:true"`
 	CreatedAt     time.Time `json:"created_at" gorm:"autoCreateTime"`

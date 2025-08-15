@@ -10,7 +10,6 @@ import (
 
 	"user-service/api/repository"
 	"user-service/api/service"
-	"user-service/middleware"
 
 	"short-url/domains/config"
 	"short-url/domains/database"
@@ -53,17 +52,19 @@ func (suite *UserControllerIntegrationTestSuite) SetupSuite() {
 	err = database.Seed(db)
 	suite.Require().NoError(err)
 
-	commandRepo := repository.NewUserSessionCommandRepository(db)
-	queryRepo := repository.NewUserSessionQueryRepository(db)
+	sessionCommandRepo := repository.NewUserSessionCommandRepository(db)
+	sessionQueryRepo := repository.NewUserSessionQueryRepository(db)
+	userQueryRepo := repository.NewUserQueryRepository(db)
 
-	userSessionService := service.NewUserSessionService(commandRepo, queryRepo)
+	userSessionService := service.NewUserSessionService(sessionCommandRepo, sessionQueryRepo, userQueryRepo)
 	suite.controller = NewUserController(userSessionService)
 
-	suite.app = fiber.New()
+	suite.app = fiber.New(fiber.Config{
+		AppName: "User Service API v1.0",
+	})
 
-	suite.app.Use(func(c *fiber.Ctx) error {
-		middleware.SetUserIDToContext(c, 1)
-		return c.Next()
+	suite.app.Get("/", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("User Service")
 	})
 
 	v1 := suite.app.Group("/api/v1")
@@ -73,6 +74,8 @@ func (suite *UserControllerIntegrationTestSuite) SetupSuite() {
 
 func (suite *UserControllerIntegrationTestSuite) TestCreateSession_Success() {
 	requestBody := dto.CreateSessionRequest{
+		Email:      "john@example.com",
+		Password:   "password123",
 		DeviceInfo: "Test Device",
 		IPAddress:  "127.0.0.1",
 	}
@@ -125,12 +128,7 @@ func (suite *UserControllerIntegrationTestSuite) TestCreateSession_InvalidJSON()
 	assert.Nil(suite.T(), baseResponse.Data)
 }
 
-func (suite *UserControllerIntegrationTestSuite) TestCreateSession_NoUserContext() {
-	app := fiber.New()
-	v1 := app.Group("/api/v1")
-	user := v1.Group("/user")
-	suite.controller.RegisterRoutes(user)
-
+func (suite *UserControllerIntegrationTestSuite) TestCreateSession_MissingCredentials() {
 	requestBody := dto.CreateSessionRequest{
 		DeviceInfo: "Test Device",
 		IPAddress:  "127.0.0.1",
@@ -140,7 +138,35 @@ func (suite *UserControllerIntegrationTestSuite) TestCreateSession_NoUserContext
 	req, _ := http.NewRequest("POST", "/api/v1/user/session", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := app.Test(req)
+	resp, err := suite.app.Test(req)
+
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), 400, resp.StatusCode)
+
+	var baseResponse dto.BaseResponse
+	err = json.NewDecoder(resp.Body).Decode(&baseResponse)
+	assert.NoError(suite.T(), err)
+
+	assert.False(suite.T(), baseResponse.Success)
+	assert.Equal(suite.T(), 400, baseResponse.Status)
+	assert.Equal(suite.T(), "Email and password are required", baseResponse.Message)
+	assert.Equal(suite.T(), "v1", baseResponse.APIVersion)
+	assert.Nil(suite.T(), baseResponse.Data)
+}
+
+func (suite *UserControllerIntegrationTestSuite) TestCreateSession_InvalidCredentials() {
+	requestBody := dto.CreateSessionRequest{
+		Email:      "john@example.com",
+		Password:   "wrongpassword",
+		DeviceInfo: "Test Device",
+		IPAddress:  "127.0.0.1",
+	}
+
+	body, _ := json.Marshal(requestBody)
+	req, _ := http.NewRequest("POST", "/api/v1/user/session", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := suite.app.Test(req)
 
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 401, resp.StatusCode)
@@ -151,7 +177,7 @@ func (suite *UserControllerIntegrationTestSuite) TestCreateSession_NoUserContext
 
 	assert.False(suite.T(), baseResponse.Success)
 	assert.Equal(suite.T(), 401, baseResponse.Status)
-	assert.Equal(suite.T(), "User authentication required", baseResponse.Message)
+	assert.Equal(suite.T(), "Invalid credentials", baseResponse.Message)
 	assert.Equal(suite.T(), "v1", baseResponse.APIVersion)
 	assert.Nil(suite.T(), baseResponse.Data)
 }

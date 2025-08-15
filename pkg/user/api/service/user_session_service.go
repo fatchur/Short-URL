@@ -4,29 +4,45 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"time"
 
 	"short-url/domains/entities"
 	"short-url/domains/repositories"
 	"short-url/domains/service"
+	
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserSessionService struct {
 	commandRepo repositories.UserSessionCommandRepositoryInterface
 	queryRepo   repositories.UserSessionQueryRepositoryInterface
+	userQueryRepo repositories.UserQueryRepositoryInterface
 }
 
 func NewUserSessionService(
 	commandRepo repositories.UserSessionCommandRepositoryInterface,
 	queryRepo repositories.UserSessionQueryRepositoryInterface,
+	userQueryRepo repositories.UserQueryRepositoryInterface,
 ) service.UserSessionServiceInterface {
 	return &UserSessionService{
 		commandRepo: commandRepo,
 		queryRepo:   queryRepo,
+		userQueryRepo: userQueryRepo,
 	}
 }
 
-func (s *UserSessionService) CreateSession(ctx context.Context, userID uint, deviceInfo, ipAddress string) (*entities.UserSession, error) {
+
+func (s *UserSessionService) CreateSession(ctx context.Context, email, password, deviceInfo, ipAddress string) (*entities.UserSession, error) {
+	user, err := s.userQueryRepo.FindByEmail(ctx, email)
+	if err != nil {
+		return nil, errors.New("invalid email")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		return nil, errors.New("invalid password")
+	}
+
 	sessionToken, err := generateSessionToken()
 	if err != nil {
 		return nil, err
@@ -38,7 +54,7 @@ func (s *UserSessionService) CreateSession(ctx context.Context, userID uint, dev
 	}
 
 	session := &entities.UserSession{
-		UserID:       userID,
+		UserID:       user.ID,
 		SessionToken: sessionToken,
 		SecretKey:    secretKey,
 		DeviceInfo:   &deviceInfo,

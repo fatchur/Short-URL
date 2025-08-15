@@ -37,10 +37,11 @@ func main() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	commandRepo := repository.NewUserSessionCommandRepository(db)
-	queryRepo := repository.NewUserSessionQueryRepository(db)
+	sessionCommandRepo := repository.NewUserSessionCommandRepository(db)
+	sessionQueryRepo := repository.NewUserSessionQueryRepository(db)
+	userQueryRepo := repository.NewUserQueryRepository(db)
 
-	userSessionService := service.NewUserSessionService(commandRepo, queryRepo)
+	userSessionService := service.NewUserSessionService(sessionCommandRepo, sessionQueryRepo, userQueryRepo)
 	userController := controller.NewUserController(userSessionService)
 
 	app := router.NewRouter(userController)

@@ -19,6 +19,7 @@ type Config struct {
 	DBTimezone string
 	DBLogLevel string
 	JWTSecret  string
+	Port       string
 }
 
 func LoadConfig() *Config {
@@ -39,6 +40,7 @@ func LoadConfig() *Config {
 		DBTimezone: getEnvWithDefault("DB_TIMEZONE", "UTC"),
 		DBLogLevel: getEnvWithDefault("DB_LOG_LEVEL", "warn"),
 		JWTSecret:  getRequiredEnv("JWT_SECRET"),
+		Port:       getEnvWithDefault("PORT", "8080"),
 	}
 
 	log.Println("Configuration loaded successfully")

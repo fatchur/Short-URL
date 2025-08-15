@@ -7,5 +7,5 @@ import (
 )
 
 type UserSessionServiceInterface interface {
-	CreateSession(ctx context.Context, userID uint, deviceInfo, ipAddress string) (*entities.UserSession, error)
+	CreateSession(ctx context.Context, email, password, deviceInfo, ipAddress string) (*entities.UserSession, error)
 }
