@@ -56,7 +56,7 @@ func main() {
 
 	shortUrlController := controller.NewShortUrlController(shortUrlService)
 
-	app := router.NewRouter(shortUrlController)
+	app := router.NewRouter(shortUrlController, cfg.JWTSecret)
 
 	log.Println("Starting server on :8080...")
 	if err := app.Listen(":8080"); err != nil {

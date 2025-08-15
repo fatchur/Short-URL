@@ -2,11 +2,12 @@ package router
 
 import (
 	"short-url-service/api/controller"
+	"short-url-service/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewRouter(shortUrlController *controller.ShortUrlController) *fiber.App {
+func NewRouter(shortUrlController *controller.ShortUrlController, jwtSecret string) *fiber.App {
 	app := fiber.New()
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -14,7 +15,9 @@ func NewRouter(shortUrlController *controller.ShortUrlController) *fiber.App {
 	})
 
 	v1 := app.Group("/api/v1")
-	shortUrlController.RegisterRoutes(v1)
+	
+	protected := v1.Group("/", middleware.JWTAuth(jwtSecret))
+	shortUrlController.RegisterRoutes(protected)
 
 	return app
 }

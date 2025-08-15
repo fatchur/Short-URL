@@ -18,6 +18,7 @@ type Config struct {
 	DBSSLMode  string
 	DBTimezone string
 	DBLogLevel string
+	JWTSecret  string
 }
 
 func LoadConfig() *Config {
@@ -37,6 +38,7 @@ func LoadConfig() *Config {
 		DBSSLMode:  getEnvWithDefault("DB_SSLMODE", "disable"),
 		DBTimezone: getEnvWithDefault("DB_TIMEZONE", "UTC"),
 		DBLogLevel: getEnvWithDefault("DB_LOG_LEVEL", "warn"),
+		JWTSecret:  getRequiredEnv("JWT_SECRET"),
 	}
 
 	log.Println("Configuration loaded successfully")

@@ -8,11 +8,11 @@ replace short-url/cmd => ../../cmd
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.9
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/redis/go-redis/v9 v9.12.1
 	github.com/stretchr/testify v1.8.1
 	gorm.io/gorm v1.30.1
 	short-url v0.0.0
-	short-url/cmd v0.0.0-00010101000000-000000000000
 )
 
 require (

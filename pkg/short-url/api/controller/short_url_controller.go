@@ -3,6 +3,7 @@ package controller
 import (
 	"short-url/domains/dto"
 	"short-url/domains/service"
+	"short-url-service/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -26,7 +27,14 @@ func (c *ShortUrlController) CreateShortUrl(ctx *fiber.Ctx) error {
 		})
 	}
 
-	shortUrl, err := c.service.CreateShortUrl(ctx.Context(), req.LongUrl, req.UserID)
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == 0 {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "User authentication required",
+		})
+	}
+
+	shortUrl, err := c.service.CreateShortUrl(ctx.Context(), req.LongUrl, userID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create short URL",
