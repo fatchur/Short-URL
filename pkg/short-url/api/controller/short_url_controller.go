@@ -22,62 +22,60 @@ func (c *ShortUrlController) CreateShortUrl(ctx *fiber.Ctx) error {
 	var req dto.CreateShortUrlRequest
 
 	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
+		response := dto.NewErrorResponse(fiber.StatusBadRequest, "Invalid request body")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == 0 {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "User authentication required",
-		})
+		response := dto.NewErrorResponse(fiber.StatusUnauthorized, "User authentication required")
+		return ctx.Status(fiber.StatusUnauthorized).JSON(response)
 	}
 
 	shortUrl, err := c.service.CreateShortUrl(ctx.Context(), req.LongUrl, userID)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create short URL",
-		})
+		response := dto.NewErrorResponse(fiber.StatusInternalServerError, "Failed to create short URL")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(response)
 	}
 
-	response := dto.CreateShortUrlResponse{
+	responseData := dto.CreateShortUrlResponse{
 		ID:        shortUrl.ID,
 		ShortCode: shortUrl.ShortCode,
 		LongUrl:   shortUrl.LongUrl,
 		UserID:    shortUrl.UserID,
 	}
 
+	response := dto.NewSuccessResponse(fiber.StatusCreated, "Short URL created successfully", responseData)
 	return ctx.Status(fiber.StatusCreated).JSON(response)
 }
 
 func (c *ShortUrlController) GetLongUrl(ctx *fiber.Ctx) error {
 	shortCode := ctx.Params("shortCode")
 	if shortCode == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Short code is required",
-		})
+		response := dto.NewErrorResponse(fiber.StatusBadRequest, "Short code is required")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == 0 {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "User authentication required",
-		})
+		response := dto.NewErrorResponse(fiber.StatusUnauthorized, "User authentication required")
+		return ctx.Status(fiber.StatusUnauthorized).JSON(response)
 	}
 
 	shortUrl, err := c.service.GetByShortCode(ctx.Context(), shortCode, userID)
 	if err != nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Short URL not found or access denied",
-		})
+		response := dto.NewErrorResponse(fiber.StatusNotFound, "Short URL not found or access denied")
+		return ctx.Status(fiber.StatusNotFound).JSON(response)
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+	responseData := map[string]interface{}{
 		"short_code": shortUrl.ShortCode,
 		"long_url":   shortUrl.LongUrl,
 		"user_id":    shortUrl.UserID,
-	})
+	}
+
+	response := dto.NewSuccessResponse(fiber.StatusOK, "Short URL retrieved successfully", responseData)
+	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
 func (c *ShortUrlController) RegisterRoutes(api fiber.Router) {

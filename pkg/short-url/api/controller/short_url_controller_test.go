@@ -99,15 +99,26 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_Success(
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 201, resp.StatusCode)
 
-	var responseBody dto.CreateShortUrlResponse
-	err = json.NewDecoder(resp.Body).Decode(&responseBody)
+	var baseResponse dto.BaseResponse
+	err = json.NewDecoder(resp.Body).Decode(&baseResponse)
 	assert.NoError(suite.T(), err)
 
-	assert.NotZero(suite.T(), responseBody.ID)
-	assert.Equal(suite.T(), uint(1), responseBody.UserID)
-	assert.Equal(suite.T(), "https://example.com/very-long-url-that-needs-shortening", responseBody.LongUrl)
-	assert.NotEmpty(suite.T(), responseBody.ShortCode)
-	assert.Len(suite.T(), responseBody.ShortCode, 8)
+	assert.True(suite.T(), baseResponse.Success)
+	assert.Equal(suite.T(), 201, baseResponse.Status)
+	assert.Equal(suite.T(), "Short URL created successfully", baseResponse.Message)
+	assert.Equal(suite.T(), "v1", baseResponse.APIVersion)
+	assert.NotNil(suite.T(), baseResponse.Data)
+
+	dataBytes, _ := json.Marshal(baseResponse.Data)
+	var responseData dto.CreateShortUrlResponse
+	err = json.Unmarshal(dataBytes, &responseData)
+	assert.NoError(suite.T(), err)
+
+	assert.NotZero(suite.T(), responseData.ID)
+	assert.Equal(suite.T(), uint(1), responseData.UserID)
+	assert.Equal(suite.T(), "https://example.com/very-long-url-that-needs-shortening", responseData.LongUrl)
+	assert.NotEmpty(suite.T(), responseData.ShortCode)
+	assert.Len(suite.T(), responseData.ShortCode, 8)
 }
 
 func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_InvalidJSON() {
@@ -122,10 +133,15 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_InvalidJ
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 400, resp.StatusCode)
 
-	var responseBody map[string]interface{}
-	err = json.NewDecoder(resp.Body).Decode(&responseBody)
+	var baseResponse dto.BaseResponse
+	err = json.NewDecoder(resp.Body).Decode(&baseResponse)
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), "Invalid request body", responseBody["error"])
+
+	assert.False(suite.T(), baseResponse.Success)
+	assert.Equal(suite.T(), 400, baseResponse.Status)
+	assert.Equal(suite.T(), "Invalid request body", baseResponse.Message)
+	assert.Equal(suite.T(), "v1", baseResponse.APIVersion)
+	assert.Nil(suite.T(), baseResponse.Data)
 }
 
 func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_EmptyLongUrl() {
@@ -144,6 +160,15 @@ func (suite *ShortUrlControllerIntegrationTestSuite) TestCreateShortUrl_EmptyLon
 
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 201, resp.StatusCode)
+
+	var baseResponse dto.BaseResponse
+	err = json.NewDecoder(resp.Body).Decode(&baseResponse)
+	assert.NoError(suite.T(), err)
+
+	assert.True(suite.T(), baseResponse.Success)
+	assert.Equal(suite.T(), 201, baseResponse.Status)
+	assert.Equal(suite.T(), "Short URL created successfully", baseResponse.Message)
+	assert.Equal(suite.T(), "v1", baseResponse.APIVersion)
 }
 
 func (suite *ShortUrlControllerIntegrationTestSuite) generateTestJWT(userID uint, email, sessionToken string) string {
