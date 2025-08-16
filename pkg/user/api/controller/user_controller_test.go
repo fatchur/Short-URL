@@ -69,6 +69,8 @@ func (suite *UserControllerIntegrationTestSuite) SetupSuite() {
 
 	v1 := suite.app.Group("/api/v1")
 	user := v1.Group("/user")
+	
+	user.Post("/session", suite.controller.CreateSession)
 	suite.controller.RegisterRoutes(user)
 }
 
