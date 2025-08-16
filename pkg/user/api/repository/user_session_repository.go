@@ -56,10 +56,10 @@ func (r *UserSessionQueryRepository) FindByID(ctx context.Context, id uint) (*en
 	return &session, nil
 }
 
-func (r *UserSessionQueryRepository) FindBySessionToken(ctx context.Context, token string) (*entities.UserSession, error) {
+func (r *UserSessionQueryRepository) FindBySessionCode(ctx context.Context, code string) (*entities.UserSession, error) {
 	var session entities.UserSession
 	err := r.db.WithContext(ctx).
-		Where("session_token = ? AND is_active = ? AND expires_at > ?", token, true, time.Now()).
+		Where("session_code = ? AND is_active = ? AND expires_at > ?", code, true, time.Now()).
 		First(&session).Error
 	if err != nil {
 		return nil, err
@@ -75,10 +75,10 @@ func (r *UserSessionQueryRepository) FindActiveByUserID(ctx context.Context, use
 	return sessions, err
 }
 
-func (r *UserSessionQueryRepository) FindByUserIDAndToken(ctx context.Context, userID uint, token string) (*entities.UserSession, error) {
+func (r *UserSessionQueryRepository) FindByUserIDAndCode(ctx context.Context, userID uint, code string) (*entities.UserSession, error) {
 	var session entities.UserSession
 	err := r.db.WithContext(ctx).
-		Where("user_id = ? AND session_token = ? AND is_active = ? AND expires_at > ?", userID, token, true, time.Now()).
+		Where("user_id = ? AND session_code = ? AND is_active = ? AND expires_at > ?", userID, code, true, time.Now()).
 		First(&session).Error
 	if err != nil {
 		return nil, err

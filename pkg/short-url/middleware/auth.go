@@ -4,21 +4,14 @@ import (
 	"strings"
 
 	"short-url/domains/repositories"
+	"short-url/domains/helper/jwt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
-type Claims struct {
-	UserID       uint   `json:"user_id"`
-	Email        string `json:"email"`
-	SessionToken string `json:"session_token"`
-	jwt.RegisteredClaims
-}
 
 const (
-	ContextUserID    = "user_id"
-	ContextUserEmail = "user_email"
+	ContextUserID = "user_id"
 )
 
 func JWTAuth(sessionQueryRepo repositories.UserSessionQueryRepositoryInterface) fiber.Handler {
@@ -37,35 +30,28 @@ func JWTAuth(sessionQueryRepo repositories.UserSessionQueryRepositoryInterface) 
 			})
 		}
 
-		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-			claims, ok := token.Claims.(*Claims)
-			if !ok {
-				return nil, jwt.ErrInvalidKey
-			}
+		tempClaims, err := jwt.ParseJWTToken(tokenString)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Invalid token format",
+			})
+		}
 
-			session, err := sessionQueryRepo.FindBySessionToken(c.Context(), claims.SessionToken)
-			if err != nil {
-				return nil, jwt.ErrInvalidKey
-			}
+		session, err := sessionQueryRepo.FindBySessionCode(c.Context(), tempClaims.SessionCode)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Session not found",
+			})
+		}
 
-			return []byte(session.SecretKey), nil
-		})
-
-		if err != nil || !token.Valid {
+		claims, err := jwt.ValidateJWTToken(tokenString, session.SecretKey)
+		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Invalid or expired token",
 			})
 		}
 
-		claims, ok := token.Claims.(*Claims)
-		if !ok {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid token claims",
-			})
-		}
-
 		c.Locals(ContextUserID, claims.UserID)
-		c.Locals(ContextUserEmail, claims.Email)
 
 		return c.Next()
 	}
@@ -79,10 +65,3 @@ func GetUserIDFromContext(c *fiber.Ctx) uint {
 	return userID
 }
 
-func GetUserEmailFromContext(c *fiber.Ctx) string {
-	email, ok := c.Locals(ContextUserEmail).(string)
-	if !ok {
-		return ""
-	}
-	return email
-}

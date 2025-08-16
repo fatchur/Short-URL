@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"short-url/domains/entities"
+	"short-url/domains/dto"
 )
 
 type UserSessionServiceInterface interface {
-	CreateSession(ctx context.Context, email, password, deviceInfo, ipAddress string) (*entities.UserSession, error)
+	CreateSession(ctx context.Context, email, password, deviceInfo, ipAddress string) (*dto.SessionTokenData, error)
 }

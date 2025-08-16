@@ -1,20 +1,14 @@
 package middleware
 
 import (
-	"context"
 	"strings"
 
 	"short-url/domains/repositories"
+	"short-url/domains/helper/jwt"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
-type Claims struct {
-	UserID       uint   `json:"user_id"`
-	Email        string `json:"email"`
-	SessionToken string `json:"session_token"`
-	jwt.RegisteredClaims
-}
 
 func GetUserIDFromContext(c *fiber.Ctx) uint {
 	userID := c.Locals("userID")
@@ -54,30 +48,24 @@ func JWTAuth(sessionQueryRepo repositories.UserSessionQueryRepositoryInterface) 
 			})
 		}
 
-		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-			claims, ok := token.Claims.(*Claims)
-			if !ok {
-				return nil, jwt.ErrInvalidKey
-			}
-
-			session, err := sessionQueryRepo.FindBySessionToken(context.Background(), claims.SessionToken)
-			if err != nil {
-				return nil, jwt.ErrInvalidKey
-			}
-
-			return []byte(session.SecretKey), nil
-		})
-
-		if err != nil || !token.Valid {
+		tempClaims, err := jwt.ParseJWTToken(tokenString)
+		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid or expired token",
+				"error": "Invalid token format",
 			})
 		}
 
-		claims, ok := token.Claims.(*Claims)
-		if !ok {
+		session, err := sessionQueryRepo.FindBySessionCode(c.Context(), tempClaims.SessionCode)
+		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid token claims",
+				"error": "Session not found",
+			})
+		}
+
+		claims, err := jwt.ValidateJWTToken(tokenString, session.SecretKey)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Invalid or expired token",
 			})
 		}
 

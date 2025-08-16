@@ -69,7 +69,7 @@ func (suite *UserControllerIntegrationTestSuite) SetupSuite() {
 
 	v1 := suite.app.Group("/api/v1")
 	user := v1.Group("/user")
-	
+
 	user.Post("/session", suite.controller.CreateSession)
 	suite.controller.RegisterRoutes(user)
 }
@@ -106,7 +106,7 @@ func (suite *UserControllerIntegrationTestSuite) TestCreateSession_Success() {
 	err = json.Unmarshal(dataBytes, &responseData)
 	assert.NoError(suite.T(), err)
 
-	assert.NotEmpty(suite.T(), responseData.SessionToken)
+	assert.NotEmpty(suite.T(), responseData.AccessToken)
 	assert.True(suite.T(), responseData.ExpiresAt.After(time.Now()))
 }
 

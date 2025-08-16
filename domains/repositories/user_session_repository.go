@@ -15,7 +15,7 @@ type UserSessionCommandRepositoryInterface interface {
 
 type UserSessionQueryRepositoryInterface interface {
 	FindByID(ctx context.Context, id uint) (*entities.UserSession, error)
-	FindBySessionToken(ctx context.Context, token string) (*entities.UserSession, error)
+	FindBySessionCode(ctx context.Context, code string) (*entities.UserSession, error)
 	FindActiveByUserID(ctx context.Context, userID uint) ([]entities.UserSession, error)
-	FindByUserIDAndToken(ctx context.Context, userID uint, token string) (*entities.UserSession, error)
+	FindByUserIDAndCode(ctx context.Context, userID uint, code string) (*entities.UserSession, error)
 }

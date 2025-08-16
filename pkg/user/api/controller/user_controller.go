@@ -41,15 +41,16 @@ func (c *UserController) CreateSession(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
-	session, err := c.userSessionService.CreateSession(ctx.Context(), req.Email, req.Password, req.DeviceInfo, req.IPAddress)
+	sessionData, err := c.userSessionService.CreateSession(ctx.Context(), req.Email, req.Password, req.DeviceInfo, req.IPAddress)
 	if err != nil {
 		response := dto.NewErrorResponse(fiber.StatusUnauthorized, "Invalid credentials")
 		return ctx.Status(fiber.StatusUnauthorized).JSON(response)
 	}
 
 	responseData := dto.CreateSessionResponse{
-		SessionToken: session.SessionToken,
-		ExpiresAt:    session.ExpiresAt,
+		AccessToken: sessionData.AccessToken,
+		TokenType:   sessionData.TokenType,
+		ExpiresAt:   sessionData.ExpiresAt,
 	}
 
 	response := dto.NewSuccessResponse(fiber.StatusCreated, "Session created successfully", responseData)
