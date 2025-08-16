@@ -216,6 +216,12 @@ GET /health
 ```
 **Authorization:** None required  
 **Rate Limiting:** None  
+
+**cURL Example:**
+```bash
+curl -X GET http://localhost:8080/health
+```
+
 **Response:**
 ```json
 {
@@ -233,6 +239,19 @@ POST /api/v1/user/session
 ```
 **Authorization:** None required  
 **Rate Limiting:** **Strict** - 5 requests per 15 minutes per IP  
+
+**cURL Example:**
+```bash
+curl -X POST http://localhost:8080/api/v1/user/session \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123",
+    "device_info": "Chrome/MacOS",
+    "ip_address": "192.168.1.1"
+  }'
+```
+
 **Request Body:**
 ```json
 {
@@ -290,6 +309,17 @@ Authorization: Bearer <access_token>
 ```
 **Authorization:** **Required** - Valid JWT Bearer token  
 **Rate Limiting:** **Flexible** - 100 requests per minute per IP  
+
+**cURL Example:**
+```bash
+curl -X POST http://localhost:8080/api/v1/url/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -d '{
+    "long_url": "https://example.com/very/long/url/path"
+  }'
+```
+
 **Request Body:**
 ```json
 {
@@ -341,6 +371,14 @@ Accept: application/json
 ```
 **Authorization:** **Required** - Valid JWT Bearer token  
 **Rate Limiting:** **Flexible** - 100 requests per minute per IP  
+
+**cURL Example:**
+```bash
+curl -X GET http://localhost:8080/api/v1/url/abc123 \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
 **Path Parameters:**
 - `shortCode`: Required, the short code identifier
 
@@ -383,6 +421,16 @@ GET /url/{shortCode}
 ```
 **Authorization:** None required  
 **Rate Limiting:** None  
+
+**cURL Example:**
+```bash
+# Follow redirect automatically
+curl -L http://localhost:8080/url/abc123
+
+# See redirect response without following
+curl -I http://localhost:8080/url/abc123
+```
+
 **Path Parameters:**
 - `shortCode`: Required, the short code identifier
 
@@ -412,6 +460,49 @@ All API errors follow this format:
 - Use Bearer token in Authorization header: `Authorization: Bearer <access_token>`
 - Token expires as indicated in the login response
 - All Short URL APIs require authentication except public redirects
+
+### Complete Workflow Example
+
+**1. Login and get access token:**
+```bash
+# Login
+curl -X POST http://localhost:8080/api/v1/user/session \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123"
+  }'
+
+# Response will contain access_token - copy it for next steps
+```
+
+**2. Create a short URL:**
+```bash
+# Replace YOUR_TOKEN with the access_token from step 1
+curl -X POST http://localhost:8080/api/v1/url/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "long_url": "https://www.google.com"
+  }'
+
+# Response will contain short_code - copy it for next steps
+```
+
+**3. Get URL info (authenticated):**
+```bash
+# Replace YOUR_TOKEN and SHORT_CODE from previous steps
+curl -X GET http://localhost:8080/api/v1/url/SHORT_CODE \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**4. Test public redirect:**
+```bash
+# Replace SHORT_CODE from step 2
+curl -L http://localhost:8080/url/SHORT_CODE
+# This will redirect to the original long URL
+```
 
 ## Troubleshooting
 
