@@ -1,4 +1,4 @@
-.PHONY: tidy lint migrate seed up drop-table clear-table mocks integration-test build-monolith build-user build-short-url
+.PHONY: tidy lint migrate seed up drop-table clear-table mocks integration-test build-monolith build-user build-short-url up-monolith down-monolith up-user down-user up-short-url down-short-url up-db down-db
 
 tidy:
 	go mod tidy
@@ -52,4 +52,28 @@ build-user:
 
 build-short-url:
 	docker build -t short-url-service -f pkg/short-url/Dockerfile .
+
+up-monolith:
+	docker-compose -f docker-compose.monolith.yml up -d
+
+down-monolith:
+	docker-compose -f docker-compose.monolith.yml down
+
+up-user:
+	docker-compose -f docker-compose.user.yml up -d
+
+down-user:
+	docker-compose -f docker-compose.user.yml down
+
+up-short-url:
+	docker-compose -f docker-compose.short-url.yml up -d
+
+down-short-url:
+	docker-compose -f docker-compose.short-url.yml down
+
+up-db:
+	docker-compose -f docker-compose.db.yml up -d
+
+down-db:
+	docker-compose -f docker-compose.db.yml down
 
