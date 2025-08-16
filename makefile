@@ -1,10 +1,11 @@
-.PHONY: tidy lint migrate seed up drop-table clear-table mocks integration-test
+.PHONY: tidy lint migrate seed up drop-table clear-table mocks integration-test build-monolith build-user build-short-url
 
 tidy:
 	go mod tidy
 	cd cmd && go mod tidy
 	cd pkg/short-url && go mod tidy
 	cd pkg/user && go mod tidy
+	cd pkg && go mod tidy
 
 lint:
 	@if command -v golangci-lint >/dev/null 2>&1; then \
@@ -42,4 +43,13 @@ integration-test:
 	@echo "Testing Short URL Service Controller..."
 	cd pkg/short-url && go test -v -cover ./api/controller -run TestShortUrlControllerIntegrationTestSuite
 	@echo "All integration tests completed!"
+
+build-monolith:
+	docker build -t short-url-monolith -f pkg/Dockerfile .
+
+build-user:
+	docker build -t user-service -f pkg/user/Dockerfile .
+
+build-short-url:
+	docker build -t short-url-service -f pkg/short-url/Dockerfile .
 

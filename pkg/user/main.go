@@ -56,10 +56,23 @@ func main() {
 		ContentTypeNosniff: "nosniff",
 		XFrameOptions:      "DENY",
 		HSTSMaxAge:         31536000,
-		// HSTSIncludeSubDomains: true,  // TODO: Check correct field name in Fiber v2
-		ReferrerPolicy:     "strict-origin-when-cross-origin",
+		// HSTSIncludeSubDomains: true,
+		ReferrerPolicy: "strict-origin-when-cross-origin",
 	}))
 
+	app.Use(limiter.New(limiter.Config{
+		Max:        5,
+		Expiration: 15 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.Get("x-forwarded-for", c.IP())
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(429).JSON(fiber.Map{
+				"error": "Too many login attempts. Please try again in 15 minutes.",
+			})
+		},
+		SkipFailedRequests: true,
+	}))
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.AllowedOrigins,
