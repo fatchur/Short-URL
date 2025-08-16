@@ -4,13 +4,10 @@ FROM golang:1.23-alpine AS builder
 RUN apk add --no-cache git
 
 WORKDIR /app
-COPY go.mod go.sum ./
-COPY ../go.mod ../go.sum ../
 COPY . .
-COPY ../ ../
 
 RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o monolith .
+RUN cd pkg && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o monolith .
 
 
 FROM alpine:latest
@@ -21,8 +18,8 @@ RUN addgroup -g 1001 -S appuser && \
     adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G appuser appuser
 
 WORKDIR /app
-COPY --from=builder /app/monolith .
-COPY --from=builder /app/../domains/config/.env ./config/.env
+COPY --from=builder /app/pkg/monolith .
+COPY --from=builder /app/domains/config/.env ./domains/config/.env
 
 # Change ownership to non-root user
 RUN chown -R appuser:appuser /app
