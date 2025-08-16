@@ -2,6 +2,7 @@ package controller
 
 import (
 	"short-url/domains/dto"
+	"short-url/domains/helper"
 	"short-url/domains/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,6 +28,16 @@ func (c *UserController) CreateSession(ctx *fiber.Ctx) error {
 
 	if req.Email == "" || req.Password == "" {
 		response := dto.NewErrorResponse(fiber.StatusBadRequest, "Email and password are required")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
+	}
+
+	if len(req.Password) < 8 {
+		response := dto.NewErrorResponse(fiber.StatusBadRequest, "Password must be at least 8 characters long")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
+	}
+
+	if !helper.IsValidEmail(req.Email) {
+		response := dto.NewErrorResponse(fiber.StatusBadRequest, "Invalid email format")
 		return ctx.Status(fiber.StatusBadRequest).JSON(response)
 	}
 

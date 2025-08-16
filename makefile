@@ -1,4 +1,4 @@
-.PHONY: tidy lint migrate seed up drop-table clear-table mocks
+.PHONY: tidy lint migrate seed up drop-table clear-table mocks integration-test
 
 tidy:
 	go mod tidy
@@ -35,4 +35,11 @@ clear-table:
 mocks:
 	$(shell go env GOPATH)/bin/mockery
 
+integration-test:
+	@echo "Running integration tests with coverage..."
+	@echo "Testing User Service Controller..."
+	cd pkg/user && go test -v -cover ./api/controller -run TestUserControllerIntegrationTestSuite
+	@echo "Testing Short URL Service Controller..."
+	cd pkg/short-url && go test -v -cover ./api/controller -run TestShortUrlControllerIntegrationTestSuite
+	@echo "All integration tests completed!"
 

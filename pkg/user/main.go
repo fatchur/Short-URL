@@ -13,7 +13,12 @@ import (
 	"short-url/domains/database"
 	"short-url/domains/dto"
 
+	"time"
+
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
@@ -45,7 +50,37 @@ func main() {
 	userController := controller.NewUserController(userSessionService)
 
 	app := router.NewRouter(userController)
-	app.Use(cors.New())
+
+	app.Use(helmet.New(helmet.Config{
+		XSSProtection:      "1; mode=block",
+		ContentTypeNosniff: "nosniff",
+		XFrameOptions:      "DENY",
+		HSTSMaxAge:         31536000,
+		// HSTSIncludeSubDomains: true,  // TODO: Check correct field name in Fiber v2
+		ReferrerPolicy:     "strict-origin-when-cross-origin",
+	}))
+
+	app.Use(limiter.New(limiter.Config{
+		Max:        5,
+		Expiration: 15 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.Get("x-forwarded-for", c.IP())
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(429).JSON(fiber.Map{
+				"error": "Too many login attempts. Please try again in 15 minutes.",
+			})
+		},
+		SkipFailedRequests: true,
+	}))
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     cfg.AllowedOrigins,
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
+		AllowCredentials: true,
+	}))
+
 	app.Use(logger.New())
 
 	port := cfg.Port
@@ -53,6 +88,12 @@ func main() {
 		port = "8081"
 	}
 
-	log.Printf("User service starting on port %s", port)
-	log.Fatal(app.Listen(":" + port))
+	if cfg.Environment == "production" {
+		log.Printf("User service starting on port %s with HTTPS", port)
+		log.Fatal(app.ListenTLS(":"+port, cfg.TLSCertFile, cfg.TLSKeyFile))
+	} else {
+		log.Printf("User service starting on port %s (HTTP - Development only)", port)
+		log.Printf("WARNING: Using HTTP in development. Use HTTPS in production!")
+		log.Fatal(app.Listen(":" + port))
+	}
 }
