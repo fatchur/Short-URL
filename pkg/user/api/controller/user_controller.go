@@ -56,6 +56,13 @@ func (c *UserController) CreateSession(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(response)
 }
 
-func (c *UserController) RegisterRoutes(api fiber.Router) {
-	api.Post("/session", c.CreateSession)
+func (c *UserController) RegisterRoutes(api fiber.Router, flexibleLimiter ...fiber.Handler) {
+	// Note: /session route is registered in router with strict limiter
+	// Future endpoints will use flexible limiter
+	
+	// Example future endpoints (commented out until implemented):
+	// api.Get("/profile", append(flexibleLimiter, c.GetProfile)...)
+	// api.Put("/profile", append(flexibleLimiter, c.UpdateProfile)...)
+	// api.Get("/sessions", append(flexibleLimiter, c.GetUserSessions)...)
+	// api.Delete("/session/:id", append(flexibleLimiter, c.DeleteSession)...)
 }
