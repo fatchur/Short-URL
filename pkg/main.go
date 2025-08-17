@@ -139,19 +139,21 @@ func main() {
 	url.Post("/", flexibleLimiter, shortUrlMiddleware.JWTAuth(userSessionQueryRepo), shortUrlCtrl.CreateShortUrl)
 	url.Get("/:shortCode", flexibleLimiter, shortUrlMiddleware.JWTAuth(userSessionQueryRepo), shortUrlCtrl.GetLongUrl)
 
-	// Direct redirect route (no auth required for public access)
-	app.Get("/url/:shortCode", shortUrlCtrl.PublicRedirect)
-
 	// Start server
 	port := cfg.Port
 	if port == "" {
 		port = "8080"
 	}
 
+	// Direct redirect routes (no auth required for public access) - MUST be absolutely last
+	app.Get("/url/:shortCode", shortUrlCtrl.PublicRedirect) // Temporary: keep old route
+	app.Get("/:shortCode", shortUrlCtrl.PublicRedirect)
+
 	log.Printf("Monolith server starting on port %s", port)
 	log.Printf("Health check available at: http://localhost:%s/health", port)
 	log.Printf("User API available at: http://localhost:%s/api/v1/user", port)
 	log.Printf("Short URL API available at: http://localhost:%s/api/v1/url", port)
+	log.Printf("Short URL redirect available at: http://localhost:%s/:shortCode", port)
 
 	if cfg.Environment == "production" {
 		log.Fatal(app.ListenTLS(":"+port, cfg.TLSCertFile, cfg.TLSKeyFile))

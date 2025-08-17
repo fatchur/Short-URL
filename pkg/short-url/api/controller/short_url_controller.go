@@ -96,6 +96,18 @@ func (c *ShortUrlController) PublicRedirect(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusNotFound).JSON(response)
 	}
 
+	acceptHeader := ctx.Get("Accept")
+	if acceptHeader == "application/json" {
+		responseData := map[string]interface{}{
+			"short_code": shortUrl.ShortCode,
+			"long_url":   shortUrl.LongUrl,
+			"user_id":    shortUrl.UserID,
+		}
+
+		response := dto.NewSuccessResponse(fiber.StatusOK, "Short URL retrieved successfully", responseData)
+		return ctx.Status(fiber.StatusOK).JSON(response)
+	}
+
 	return ctx.Redirect(shortUrl.LongUrl, fiber.StatusFound)
 }
 

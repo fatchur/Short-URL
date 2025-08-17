@@ -91,7 +91,7 @@ docker-compose -f docker-compose.monolith.yml down
 **Monolith includes:**
 - PostgreSQL database
 - Redis cache
-- Automatic database migration
+- Automatic database migration and seeding
 - Combined user + short-url APIs
 - Runs on port 8080
 
@@ -117,7 +117,7 @@ docker-compose -f docker-compose.user.yml down
 
 **User service includes:**
 - PostgreSQL database
-- Automatic database migration
+- Automatic database migration and seeding
 - User authentication APIs
 - Runs on port 8080
 
@@ -144,7 +144,7 @@ docker-compose -f docker-compose.short-url.yml down
 **Short-URL service includes:**
 - PostgreSQL database
 - Redis cache
-- Automatic database migration
+- Automatic database migration and seeding
 - URL shortening APIs
 - Runs on port 8080
 
@@ -200,10 +200,11 @@ This will start:
 
 ## Database Migration
 
-Each service automatically runs database migrations before starting:
+Each service automatically runs database migrations and seeding before starting:
 - Migration runs using `cd cmd && go run . -d migrate`
-- Services wait for migration completion before starting
-- Migration runs once per deployment
+- Seeding runs using `cd cmd && go run . -d seed` (after migration)
+- Services wait for migration and seeding completion before starting
+- Migration and seeding run once per deployment
 
 ### Manual Database Operations
 
@@ -219,13 +220,21 @@ cd cmd && go run . -d migrate
 
 ### Database Seeding
 
+**Automatic Seeding:** All Docker Compose configurations automatically seed the database with sample data.
+
+**Manual Seeding:**
 ```bash
 # Seed initial data
 make seed
 
 # Manual seed command
-cd cmd && go run . -d=seed
+cd cmd && go run . -d seed
 ```
+
+**Seeded Data Includes:**
+- Sample users (john@example.com, jane@example.com, bob@example.com)
+- Sample short URLs for testing
+- Default configurations
 
 **Seeded Users:**
 
@@ -304,6 +313,8 @@ All services include health checks:
    ```
 
 ## API Contracts
+
+> **URL Format Update:** Short URLs now support clean format `/{shortCode}` (e.g., `http://localhost:8080/abc123`) alongside the legacy `/url/{shortCode}` format. Both formats support content negotiation - use `Accept: application/json` header to get JSON response instead of redirect.
 
 ### Health Check
 ```
@@ -530,24 +541,43 @@ curl -X GET http://localhost:8080/api/v1/url/abc123 \
 
 #### Public Redirect (No Auth Required)
 ```
-GET /url/{shortCode}
+GET /{shortCode}         # Clean URL format (recommended)
+GET /url/{shortCode}     # Legacy format (still supported)
 ```
 **Authorization:** None required  
 **Rate Limiting:** None  
+**Content Negotiation:** Supports both redirect and JSON response
 
-**cURL Example:**
+**cURL Examples:**
 ```bash
-# Follow redirect automatically
-curl -L http://localhost:8080/url/abc123
+# Clean URL format (recommended)
+curl -L http://localhost:8080/abc123
 
-# See redirect response without following
-curl -I http://localhost:8080/url/abc123
+# Get JSON response instead of redirect
+curl -H "Accept: application/json" http://localhost:8080/abc123
+
+# See redirect response headers without following
+curl -I http://localhost:8080/abc123
 ```
 
 **Path Parameters:**
 - `shortCode`: Required, the short code identifier
 
-**Response:** 302 Found redirect to the long URL  
+**Response (Default - 302 Found):** Redirect to the long URL  
+**Response (Accept: application/json - 200 OK):**
+```json
+{
+  "success": true,
+  "status": 200,
+  "message": "Short URL retrieved successfully",
+  "api_version": "v1",
+  "data": {
+    "short_code": "abc123",
+    "long_url": "https://example.com/very/long/url/path",
+    "user_id": 42
+  }
+}
+```
 **Error Response (404 Not Found):**
 ```json
 {
@@ -617,8 +647,14 @@ curl -X GET http://localhost:8080/api/v1/url/SHORT_CODE \
 **4. Test public redirect:**
 ```bash
 # Replace SHORT_CODE from step 2
+# Clean URL format (recommended)
+curl -L http://localhost:8080/SHORT_CODE
+
+# Legacy URL format (still works)
 curl -L http://localhost:8080/url/SHORT_CODE
-# This will redirect to the original long URL
+
+# Get JSON response instead of redirect
+curl -H "Accept: application/json" http://localhost:8080/SHORT_CODE
 ```
 
 ## Testing
