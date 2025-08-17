@@ -9,30 +9,43 @@ This guide covers building Docker images and running services using Docker Compo
 
 ## Building Docker Images
 
-### Build All Services
+### Monolith Service Docker
 
 ```bash
-# Build monolith service
+# Build monolith service (combines user + short-url services)
 make build-monolith
 
+# Manual build command
+docker build -t short-url-monolith -f pkg/Dockerfile .
+```
+
+### User Service Docker
+
+```bash
 # Build user service
 make build-user
 
-# Build short-url service
-make build-short-url
+# Manual build command
+docker build -t user-service -f pkg/user/Dockerfile .
 ```
 
-### Individual Build Commands
+### Short-URL Service Docker
 
 ```bash
-# Monolith (combines user + short-url services)
-docker build -t short-url-monolith -f pkg/Dockerfile .
+# Build short-url service
+make build-short-url
 
-# User service only
-docker build -t user-service -f pkg/user/Dockerfile .
-
-# Short-URL service only
+# Manual build command
 docker build -t short-url-service -f pkg/short-url/Dockerfile .
+```
+
+### Build All Services Docker
+
+```bash
+# Build all services at once
+make build-monolith
+make build-user
+make build-short-url
 ```
 
 ## Running Services with Docker Compose
@@ -61,6 +74,8 @@ The monolith combines both user and short-url services in a single container.
 
 ```bash
 # Start monolith (includes DB migration)
+# Ensure you have build the monolith image first
+# We set by default network == host
 make up-monolith
 
 # Stop monolith
@@ -86,6 +101,8 @@ Run the user service independently:
 
 ```bash
 # Start user service (includes DB migration)
+# Ensure you have build the user service image first
+# We set by default network == host
 make up-user
 
 # Stop user service
@@ -110,6 +127,8 @@ Run the short-url service independently:
 
 ```bash
 # Start short-url service (includes DB migration)
+# Ensure you have build the short-url image first
+# We set by default network == host
 make up-short-url
 
 # Stop short-url service
@@ -145,16 +164,39 @@ docker-compose -f docker-compose.short-url.yml down
 - **Port**: 8080
 - **Dependencies**: PostgreSQL
 - **APIs**: User authentication and management
+- **Endpoints**: `/api/v1/user/*`
 
 ### Short-URL Service
 - **Image**: `short-url-service`
 - **Port**: 8080
 - **Dependencies**: PostgreSQL, Redis
 - **APIs**: URL shortening and management
+- **Endpoints**: `/api/v1/url/*`, `/url/*` (public redirects)
 
 ## Network Configuration
 
 All services use `network_mode: host` for simplicity, allowing direct access to `localhost:5432` (PostgreSQL) and `localhost:6379` (Redis).
+
+## Database Setup
+
+### Start Database Services
+
+Before running any service, you need to start the database services:
+
+```bash
+# Start PostgreSQL and Redis
+make up-db
+
+# Manual command
+docker-compose -f docker-compose.db.yml up -d
+
+# Stop databases when done
+make down-db
+```
+
+This will start:
+- **PostgreSQL** on port 5432
+- **Redis** on port 6379
 
 ## Database Migration
 
@@ -162,6 +204,59 @@ Each service automatically runs database migrations before starting:
 - Migration runs using `cd cmd && go run . -d migrate`
 - Services wait for migration completion before starting
 - Migration runs once per deployment
+
+### Manual Database Operations
+
+If you need to run database operations manually:
+
+```bash
+# Run database migration
+make migrate
+
+# Manual migration command
+cd cmd && go run . -d migrate
+```
+
+### Database Seeding
+
+```bash
+# Seed initial data
+make seed
+
+# Manual seed command
+cd cmd && go run . -d=seed
+```
+
+**Seeded Users:**
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@example.com | admin123 | Admin |
+| user@example.com | user123 | User |
+| test@example.com | test123 | User |
+| demo@example.com | demo123 | User |
+
+> **Note:** The passwords shown in the table above are for demonstration purposes only. In the database, all passwords are stored as secure hashes using bcrypt encryption. Use these credentials to test the login functionality via the API.
+
+### Clear Database Tables
+
+```bash
+# Clear all table data (keeps structure)
+make clear-table
+
+# Manual clear command
+cd cmd && go run . -d=clear-table
+```
+
+### Drop Database Tables
+
+```bash
+# Drop all tables (removes structure and data)
+make drop-table
+
+# Manual drop command
+cd cmd && go run . -d=drop-table
+```
 
 ## Health Checks
 
@@ -270,8 +365,10 @@ curl -X POST http://localhost:8080/api/v1/user/session \
 **Response (201 Created):**
 ```json
 {
-  "status": "success",
+  "success": true,
+  "status": 201,
   "message": "Session created successfully",
+  "api_version": "v1",
   "data": {
     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "token_type": "Bearer",
@@ -282,15 +379,19 @@ curl -X POST http://localhost:8080/api/v1/user/session \
 **Error Response (401 Unauthorized):**
 ```json
 {
-  "status": "error",
-  "message": "Invalid credentials"
+  "success": false,
+  "status": 401,
+  "message": "Invalid credentials",
+  "api_version": "v1"
 }
 ```
 **Error Response (400 Bad Request):**
 ```json
 {
-  "status": "error",
-  "message": "Email and password are required"
+  "success": false,
+  "status": 400,
+  "message": "Email and password are required",
+  "api_version": "v1"
 }
 ```
 **Error Response (429 Too Many Requests):**
@@ -332,8 +433,10 @@ curl -X POST http://localhost:8080/api/v1/url/ \
 **Response (201 Created):**
 ```json
 {
-  "status": "success",
+  "success": true,
+  "status": 201,
   "message": "Short URL created successfully",
+  "api_version": "v1",
   "data": {
     "id": 1,
     "short_code": "abc123",
@@ -345,15 +448,19 @@ curl -X POST http://localhost:8080/api/v1/url/ \
 **Error Response (401 Unauthorized):**
 ```json
 {
-  "status": "error",
-  "message": "User authentication required"
+  "success": false,
+  "status": 401,
+  "message": "User authentication required",
+  "api_version": "v1"
 }
 ```
 **Error Response (400 Bad Request):**
 ```json
 {
-  "status": "error",
-  "message": "Invalid request body"
+  "success": false,
+  "status": 400,
+  "message": "Invalid request body",
+  "api_version": "v1"
 }
 ```
 **Error Response (429 Too Many Requests):**
@@ -385,8 +492,10 @@ curl -X GET http://localhost:8080/api/v1/url/abc123 \
 **Response (200 OK):**
 ```json
 {
-  "status": "success",
+  "success": true,
+  "status": 200,
   "message": "Short URL retrieved successfully",
+  "api_version": "v1",
   "data": {
     "short_code": "abc123",
     "long_url": "https://example.com/very/long/url/path",
@@ -397,15 +506,19 @@ curl -X GET http://localhost:8080/api/v1/url/abc123 \
 **Error Response (401 Unauthorized):**
 ```json
 {
-  "status": "error",
-  "message": "User authentication required"
+  "success": false,
+  "status": 401,
+  "message": "User authentication required",
+  "api_version": "v1"
 }
 ```
 **Error Response (404 Not Found):**
 ```json
 {
-  "status": "error",
-  "message": "Short URL not found or access denied"
+  "success": false,
+  "status": 404,
+  "message": "Short URL not found or access denied",
+  "api_version": "v1"
 }
 ```
 **Error Response (429 Too Many Requests):**
@@ -438,8 +551,10 @@ curl -I http://localhost:8080/url/abc123
 **Error Response (404 Not Found):**
 ```json
 {
-  "status": "error",
-  "message": "Short URL not found or access denied"
+  "success": false,
+  "status": 404,
+  "message": "Short URL not found or access denied",
+  "api_version": "v1"
 }
 ```
 
@@ -447,8 +562,10 @@ curl -I http://localhost:8080/url/abc123
 All API errors follow this format:
 ```json
 {
-  "status": "error",
-  "message": "Error description"
+  "success": false,
+  "status": 400,
+  "message": "Error description",
+  "api_version": "v1"
 }
 ```
 
