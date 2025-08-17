@@ -42,12 +42,36 @@ services:
         condition: service_healthy
     restart: "no"
 
+  seed:
+    image: golang:1.23-alpine
+    container_name: short-url-seed
+    working_dir: /app
+    volumes:
+      - .:/app
+    network_mode: host
+    command: sh -c "cd cmd && go run . -d seed"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   monolith:
     image: short-url-monolith
     container_name: short-url-monolith
-    network_mode: host
+    # For Linux: use network_mode: host for better performance
+    # network_mode: host
+    # For macOS/Windows: use port mapping (host networking doesn't work with Docker Desktop)
+    ports:
+      - "8080:8080"
+    environment:
+      # For Docker networks: use service names as hostnames
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      # For host networking: use localhost
+      # - DB_HOST=localhost  
+      # - REDIS_HOST=localhost
     depends_on:
-      migrate:
+      seed:
         condition: service_completed_successfully
       redis:
         condition: service_healthy

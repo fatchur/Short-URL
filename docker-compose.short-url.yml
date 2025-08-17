@@ -40,12 +40,25 @@ services:
         condition: service_healthy
     restart: "no"
 
+  seed:
+    image: golang:1.23-alpine
+    container_name: short-url-service-seed
+    working_dir: /app
+    volumes:
+      - .:/app
+    network_mode: host
+    command: sh -c "cd cmd && go run . -d seed"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   short-url-service:
     image: short-url-service
     container_name: short-url-service
     network_mode: host
     depends_on:
-      migrate:
+      seed:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
