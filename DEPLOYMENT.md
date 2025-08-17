@@ -621,12 +621,33 @@ curl -L http://localhost:8080/url/SHORT_CODE
 # This will redirect to the original long URL
 ```
 
+## Testing
+
+### Integration Tests
+
+Run integration tests to verify the services are working correctly:
+
+```bash
+# Run all integration tests
+make integration-test
+
+# Manual integration test command
+cd pkg/user && go test -v -cover ./api/controller -run TestUserControllerIntegrationTestSuite
+cd pkg/short-url && go test -v -cover ./api/controller -run TestShortUrlControllerIntegrationTestSuite
+```
+
+**Prerequisites for integration tests:**
+- Database must be running (`make up-db`)
+- Database must be migrated (`make migrate`)
+- Optionally seed test data (`make seed`)
+
 ## Troubleshooting
 
 - **Port conflicts**: Only run one service at a time since they all use port 8080
 - **Database connection**: Services use host networking to connect to `localhost:5432`
 - **Migration issues**: Check logs with `docker logs <container-name>`
 - **Build failures**: Ensure all dependencies are available and Docker has sufficient resources
+- **Test failures**: Ensure database is running and migrated before running integration tests
 
 
 

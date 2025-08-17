@@ -31,7 +31,6 @@ func main() {
 	ctx := context.Background()
 	cfg := config.LoadConfig()
 
-	// Database configuration
 	dbConfig := dto.DBConfig{
 		Host:     cfg.DBHost,
 		Port:     cfg.DBPort,
@@ -43,7 +42,6 @@ func main() {
 		LogLevel: cfg.DBLogLevel,
 	}
 
-	// Cache configuration
 	cacheConfig := dto.CacheConfig{
 		Host:     cfg.DBHost,
 		Port:     "6379",
@@ -51,13 +49,11 @@ func main() {
 		DB:       0,
 	}
 
-	// Connect to database
 	db, err := database.DBConnect(ctx, dbConfig)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	// Connect to Redis
 	redisClient, err := database.CacheConnect(ctx, cacheConfig)
 	if err != nil {
 		log.Fatal("Failed to connect to Redis:", err)
@@ -78,16 +74,13 @@ func main() {
 	userSessionService := userService.NewUserSessionService(userSessionCommandRepo, userSessionQueryRepo, userQueryRepo)
 	shortUrlSvc := shortUrlService.NewShortUrlService(shortUrlCommandRepo, shortUrlQueryRepo, redisRepo)
 
-	// Initialize controllers
 	userCtrl := userController.NewUserController(userSessionService)
 	shortUrlCtrl := shortUrlController.NewShortUrlController(shortUrlSvc)
 
-	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
 		AppName: "Short URL Monolith v1.0",
 	})
 
-	// Global middleware
 	app.Use(logger.New())
 	app.Use(recover.New())
 	app.Use(helmet.New(helmet.Config{
@@ -147,7 +140,7 @@ func main() {
 	url.Get("/:shortCode", flexibleLimiter, shortUrlMiddleware.JWTAuth(userSessionQueryRepo), shortUrlCtrl.GetLongUrl)
 
 	// Direct redirect route (no auth required for public access)
-	app.Get("/url/:shortCode", shortUrlCtrl.GetLongUrl)
+	app.Get("/url/:shortCode", shortUrlCtrl.PublicRedirect)
 
 	// Start server
 	port := cfg.Port

@@ -57,6 +57,29 @@ func (s *shortUrlService) GetByShortCode(ctx context.Context, shortCode string, 
 	return s.queryRepo.FindByShortCodeAndUserID(ctx, shortCode, userID)
 }
 
+func (s *shortUrlService) GetByShortCodePublic(ctx context.Context, shortCode string) (*entities.ShortUrl, error) {
+	if s.redisRepo != nil {
+		cachedUrl, err := s.redisRepo.Get(ctx, fmt.Sprintf("short_url:%s", shortCode))
+		if err == nil && cachedUrl != "" {
+			shortUrl, err := s.queryRepo.FindByShortCode(ctx, shortCode)
+			if err == nil {
+				return shortUrl, nil
+			}
+		}
+	}
+
+	shortUrl, err := s.queryRepo.FindByShortCode(ctx, shortCode)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.redisRepo != nil {
+		s.redisRepo.Set(ctx, fmt.Sprintf("short_url:%s", shortCode), shortUrl.LongUrl, time.Hour*24)
+	}
+
+	return shortUrl, nil
+}
+
 func (s *shortUrlService) GetByFilter(ctx context.Context, filter dto.ShortUrlQueryFilter, pagination dto.Pagination) ([]entities.ShortUrl, *dto.PaginationResponse, error) {
 	return s.queryRepo.FindByFilter(ctx, filter, pagination)
 }

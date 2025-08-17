@@ -83,6 +83,22 @@ func (c *ShortUrlController) GetLongUrl(ctx *fiber.Ctx) error {
 	return ctx.Redirect(shortUrl.LongUrl, fiber.StatusFound)
 }
 
+func (c *ShortUrlController) PublicRedirect(ctx *fiber.Ctx) error {
+	shortCode := ctx.Params("shortCode")
+	if shortCode == "" {
+		response := dto.NewErrorResponse(fiber.StatusBadRequest, "Short code is required")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
+	}
+
+	shortUrl, err := c.service.GetByShortCodePublic(ctx.Context(), shortCode)
+	if err != nil {
+		response := dto.NewErrorResponse(fiber.StatusNotFound, "Short URL not found")
+		return ctx.Status(fiber.StatusNotFound).JSON(response)
+	}
+
+	return ctx.Redirect(shortUrl.LongUrl, fiber.StatusFound)
+}
+
 func (c *ShortUrlController) RegisterRoutes(api fiber.Router) {
 	api.Post("/url", c.CreateShortUrl)
 }
