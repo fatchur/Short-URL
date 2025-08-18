@@ -7,6 +7,17 @@ This guide covers building Docker images and running services using Docker Compo
 - Docker and Docker Compose installed
 - Make utility
 
+## Setup Configuration
+
+Before building and running services, copy the environment configuration file:
+
+```bash
+# Copy environment configuration
+cp domains/config/.env-example domains/config/.env
+```
+
+**Note:** Review and modify the `.env` file settings as needed for your environment.
+
 ## Building Docker Images
 
 ### Monolith Service Docker
