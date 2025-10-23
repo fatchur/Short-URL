@@ -10,6 +10,8 @@ import (
 )
 
 var DropModels = []interface{}{
+	&entities.Inventory{},
+	&entities.Distributor{},
 	&entities.UrlSafety{},
 	&entities.ShortClickDaily{},
 	&entities.ShortUrl{},
