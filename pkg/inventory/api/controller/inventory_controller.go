@@ -4,6 +4,7 @@ import (
 	"inventory-service/middleware"
 	"short-url/domains/dto"
 	"short-url/domains/dto/inventory"
+	"short-url/domains/helper/validation"
 	"short-url/domains/service"
 	"short-url/domains/values/enums"
 	"strconv"
@@ -49,6 +50,10 @@ func (c *InventoryController) CreateInventory(ctx *fiber.Ctx) error {
 		return middleware.HandleBadRequestError(ctx, err)
 	}
 
+	if validationErrors := validation.ValidateStruct(&req); len(validationErrors) > 0 {
+		return middleware.HandleValidationError(ctx, validationErrors)
+	}
+
 	createdInventory, err := c.service.CreateInventory(ctx.Context(), &req)
 	if err != nil {
 		return middleware.HandleInternalServerError(ctx, err)
@@ -63,6 +68,10 @@ func (c *InventoryController) UpdateInventory(ctx *fiber.Ctx) error {
 
 	if err := ctx.BodyParser(&req); err != nil {
 		return middleware.HandleBadRequestError(ctx, err)
+	}
+
+	if validationErrors := validation.ValidateStruct(&req); len(validationErrors) > 0 {
+		return middleware.HandleValidationError(ctx, validationErrors)
 	}
 
 	updatedInventory, err := c.service.UpdateInventory(ctx.Context(), &req)

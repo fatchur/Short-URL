@@ -1,6 +1,6 @@
 module short-url-service
 
-go 1.23
+go 1.24.0
 
 replace short-url => ../../
 
@@ -11,7 +11,7 @@ replace user-service => ../user
 require (
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/redis/go-redis/v9 v9.12.1
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 	gorm.io/gorm v1.30.1
 	short-url v0.0.0
 	user-service v0.0.0-00010101000000-000000000000
@@ -40,10 +40,10 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
 )

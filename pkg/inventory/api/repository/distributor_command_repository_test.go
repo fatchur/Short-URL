@@ -23,13 +23,13 @@ type DistributorCommandRepositoryTestSuite struct {
 
 func (suite *DistributorCommandRepositoryTestSuite) SetupSuite() {
 	suite.ctx = context.Background()
-	
+
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	suite.Require().NoError(err)
-	
+
 	err = db.AutoMigrate(&entities.Distributor{})
 	suite.Require().NoError(err)
-	
+
 	suite.db = db
 	suite.repo = &distributorCommandRepository{db: db}
 }
@@ -50,7 +50,7 @@ func (suite *DistributorCommandRepositoryTestSuite) TestSave() {
 	}
 
 	err := suite.repo.Save(suite.ctx, distributor)
-	
+
 	assert.NoError(suite.T(), err)
 	assert.NotZero(suite.T(), distributor.ID)
 }
@@ -72,9 +72,9 @@ func (suite *DistributorCommandRepositoryTestSuite) TestUpdate() {
 	distributor.UpdatedAt = time.Now()
 
 	err = suite.repo.Update(suite.ctx, distributor)
-	
+
 	assert.NoError(suite.T(), err)
-	
+
 	var updated entities.Distributor
 	err = suite.db.First(&updated, distributor.ID).Error
 	assert.NoError(suite.T(), err)
@@ -95,9 +95,9 @@ func (suite *DistributorCommandRepositoryTestSuite) TestDelete() {
 	suite.Require().NoError(err)
 
 	err = suite.repo.Delete(suite.ctx, distributor.ID)
-	
+
 	assert.NoError(suite.T(), err)
-	
+
 	var count int64
 	err = suite.db.Model(&entities.Distributor{}).Where("id = ?", distributor.ID).Count(&count).Error
 	assert.NoError(suite.T(), err)
@@ -125,7 +125,7 @@ func (suite *DistributorCommandRepositoryTestSuite) TestSaveWithDuplicateEmail()
 	suite.Require().NoError(err)
 
 	err = suite.repo.Save(suite.ctx, distributor2)
-	
+
 	assert.Error(suite.T(), err)
 }
 

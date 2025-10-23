@@ -3,12 +3,11 @@ package middleware
 import (
 	"strings"
 
-	"short-url/domains/repositories"
 	"short-url/domains/helper/jwt"
+	"short-url/domains/repositories"
 
 	"github.com/gofiber/fiber/v2"
 )
-
 
 const (
 	ContextUserID = "user_id"
@@ -64,4 +63,3 @@ func GetUserIDFromContext(c *fiber.Ctx) uint {
 	}
 	return userID
 }
-
