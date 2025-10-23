@@ -4,10 +4,12 @@ import (
 	"context"
 	"time"
 
+	"short-url/domains/dto"
 	"short-url/domains/dto/inventory"
 	"short-url/domains/entities"
 	"short-url/domains/repositories"
 	"short-url/domains/service"
+	"short-url/domains/values/enums"
 )
 
 type inventoryService struct {
@@ -71,6 +73,18 @@ func (s *inventoryService) GetInventoryBySKU(ctx context.Context, sku string) (*
 	return s.queryRepo.FindBySKU(ctx, sku)
 }
 
-func (s *inventoryService) GetInventoryList(ctx context.Context) ([]*entities.Inventory, error) {
-	return s.queryRepo.FindAll(ctx)
+func (s *inventoryService) GetInventoryList(ctx context.Context, pagination dto.Pagination) ([]*entities.Inventory, *dto.PaginationResponse, error) {
+	return s.queryRepo.FindAll(ctx, pagination)
+}
+
+func (s *inventoryService) GetInventoryByCategory(ctx context.Context, category enums.InventoryCategory, pagination dto.Pagination) ([]*entities.Inventory, *dto.PaginationResponse, error) {
+	return s.queryRepo.FindByCategory(ctx, category, pagination)
+}
+
+func (s *inventoryService) GetInventoryByDistributor(ctx context.Context, distributorID uint, pagination dto.Pagination) ([]*entities.Inventory, *dto.PaginationResponse, error) {
+	return s.queryRepo.FindByDistributor(ctx, distributorID, pagination)
+}
+
+func (s *inventoryService) GetLowStockInventory(ctx context.Context, pagination dto.Pagination) ([]*entities.Inventory, *dto.PaginationResponse, error) {
+	return s.queryRepo.FindLowStock(ctx, pagination)
 }

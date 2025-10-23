@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"short-url/domains/dto"
 	"short-url/domains/entities"
 	"short-url/domains/helper"
 	"short-url/domains/values/enums"
@@ -113,11 +115,16 @@ func (suite *InventoryQueryRepositoryTestSuite) TestFindByCategory() {
 	err = suite.db.Create(inventory2).Error
 	suite.Require().NoError(err)
 
-	results, err := suite.repo.FindByCategory(suite.ctx, enums.Electronics)
+	pagination := dto.Pagination{Page: 1, PageSize: 10}
+	results, paginationResponse, err := suite.repo.FindByCategory(suite.ctx, enums.Electronics, pagination)
 	
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), results, 1)
 	assert.Equal(suite.T(), "Electronics Product", results[0].Name)
+	assert.NotNil(suite.T(), paginationResponse)
+	assert.Equal(suite.T(), int64(1), paginationResponse.Total)
+	assert.Equal(suite.T(), 1, paginationResponse.Page)
+	assert.Equal(suite.T(), 10, paginationResponse.PageSize)
 }
 
 func (suite *InventoryQueryRepositoryTestSuite) TestFindByDistributor() {
@@ -158,11 +165,14 @@ func (suite *InventoryQueryRepositoryTestSuite) TestFindByDistributor() {
 	err = suite.db.Create(inventory2).Error
 	suite.Require().NoError(err)
 
-	results, err := suite.repo.FindByDistributor(suite.ctx, distributor.ID)
+	pagination := dto.Pagination{Page: 1, PageSize: 10}
+	results, paginationResponse, err := suite.repo.FindByDistributor(suite.ctx, distributor.ID, pagination)
 	
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), results, 1)
 	assert.Equal(suite.T(), "Product 1", results[0].Name)
+	assert.NotNil(suite.T(), paginationResponse)
+	assert.Equal(suite.T(), int64(1), paginationResponse.Total)
 }
 
 func (suite *InventoryQueryRepositoryTestSuite) TestFindAll() {
@@ -191,10 +201,13 @@ func (suite *InventoryQueryRepositoryTestSuite) TestFindAll() {
 	err = suite.db.Create(inventory2).Error
 	suite.Require().NoError(err)
 
-	results, err := suite.repo.FindAll(suite.ctx)
+	pagination := dto.Pagination{Page: 1, PageSize: 10}
+	results, paginationResponse, err := suite.repo.FindAll(suite.ctx, pagination)
 	
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), results, 2)
+	assert.NotNil(suite.T(), paginationResponse)
+	assert.Equal(suite.T(), int64(2), paginationResponse.Total)
 }
 
 func (suite *InventoryQueryRepositoryTestSuite) TestFindLowStock() {
@@ -225,11 +238,54 @@ func (suite *InventoryQueryRepositoryTestSuite) TestFindLowStock() {
 	err = suite.db.Create(inventory2).Error
 	suite.Require().NoError(err)
 
-	results, err := suite.repo.FindLowStock(suite.ctx)
+	pagination := dto.Pagination{Page: 1, PageSize: 10}
+	results, paginationResponse, err := suite.repo.FindLowStock(suite.ctx, pagination)
 	
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), results, 1)
 	assert.Equal(suite.T(), "Low Stock Product", results[0].Name)
+	assert.NotNil(suite.T(), paginationResponse)
+	assert.Equal(suite.T(), int64(1), paginationResponse.Total)
+}
+
+func (suite *InventoryQueryRepositoryTestSuite) TestFindAllWithPagination() {
+	for i := 1; i <= 15; i++ {
+		inventory := &entities.Inventory{
+			Name:      fmt.Sprintf("Product %d", i),
+			SKU:       fmt.Sprintf("TEST-%03d", i),
+			Quantity:  10,
+			UnitPrice: 100.00,
+			CreatedAt: time.Now(),
+			CreatedBy: 1,
+			UpdatedAt: time.Now(),
+		}
+		err := suite.db.Create(inventory).Error
+		suite.Require().NoError(err)
+	}
+
+	pagination := dto.Pagination{Page: 1, PageSize: 10}
+	results, paginationResponse, err := suite.repo.FindAll(suite.ctx, pagination)
+	
+	assert.NoError(suite.T(), err)
+	assert.Len(suite.T(), results, 10)
+	assert.NotNil(suite.T(), paginationResponse)
+	assert.Equal(suite.T(), int64(15), paginationResponse.Total)
+	assert.Equal(suite.T(), 1, paginationResponse.Page)
+	assert.Equal(suite.T(), 10, paginationResponse.PageSize)
+	assert.Equal(suite.T(), 2, paginationResponse.TotalPages)
+	assert.True(suite.T(), paginationResponse.HasNext)
+	assert.False(suite.T(), paginationResponse.HasPrevious)
+
+	pagination = dto.Pagination{Page: 2, PageSize: 10}
+	results, paginationResponse, err = suite.repo.FindAll(suite.ctx, pagination)
+	
+	assert.NoError(suite.T(), err)
+	assert.Len(suite.T(), results, 5)
+	assert.Equal(suite.T(), int64(15), paginationResponse.Total)
+	assert.Equal(suite.T(), 2, paginationResponse.Page)
+	assert.Equal(suite.T(), 2, paginationResponse.TotalPages)
+	assert.False(suite.T(), paginationResponse.HasNext)
+	assert.True(suite.T(), paginationResponse.HasPrevious)
 }
 
 func TestInventoryQueryRepositoryTestSuite(t *testing.T) {
