@@ -15,6 +15,8 @@ var MigrateModels = []interface{}{
 	&entities.ShortUrl{},
 	&entities.ShortClickDaily{},
 	&entities.UrlSafety{},
+	&entities.Distributor{},
+	&entities.Inventory{},
 }
 
 func Migrate(ctx context.Context, dbConfig dto.DBConfig) error {
